@@ -3,11 +3,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from database import get_db, init_db
 from models import Usuario, Device as DeviceModel
 from schemas import Device, DeviceCreate
 import logging
 import multipart  # Ensure this is imported
+from pydantic import BaseModel
+from typing import Optional
+from datetime import date
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -63,13 +67,50 @@ def get_usuarios(db: Session = Depends(get_db)):
     usuarios = db.query(Usuario).all()
     return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
 
+class DeviceCreateForm(BaseModel):
+    id_tomb: int
+    tipo_de_disp: str
+    qnt_armaz: str
+    tipo_armaz: str
+    marca: str
+    funcionando: bool
+    data_de_an: date
+    locat_do_disp: str
+    descricao: Optional[str] = None
+
 @app.post("/devices/", response_model=Device)
-def create_device(device: DeviceCreate, db: Session = Depends(get_db)):
+def create_device(
+    id_tomb: int = Form(...),
+    tipo_de_disp: str = Form(...),
+    qnt_armaz: str = Form(...),
+    tipo_armaz: str = Form(...),
+    marca: str = Form(...),
+    funcionando: bool = Form(...),
+    data_de_an: date = Form(...),
+    locat_do_disp: str = Form(...),
+    descricao: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
+):
     logger.info("Creating a new device")
-    db_device = DeviceModel(**device.dict())
-    db.add(db_device)
-    db.commit()
-    db.refresh(db_device)
+    device_data = DeviceCreateForm(
+        id_tomb=id_tomb,
+        tipo_de_disp=tipo_de_disp,
+        qnt_armaz=str(qnt_armaz),  # Ensure qnt_armaz is handled as a string
+        tipo_armaz=tipo_armaz,
+        marca=marca,
+        funcionando=funcionando,
+        data_de_an=data_de_an,
+        locat_do_disp=locat_do_disp,
+        descricao=descricao
+    )
+    db_device = DeviceModel(**device_data.dict())
+    try:
+        db.add(db_device)
+        db.commit()
+        db.refresh(db_device)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Device with this ID already exists")
     return db_device
 
 @app.get("/devices/{id_tomb}", response_model=Device)
