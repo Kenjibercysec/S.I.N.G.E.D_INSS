@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INSS - Página</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Commenting out JavaScript files for testing -->
+    <!-- <script src="/static/inss.js"></script> -->
+    <!-- <script src="/static/script.js"></script> -->
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <img src="/static/inss-logo.png" alt="Logo INSS" class="logo">
+        </header>
+
+        <div class="top-btns">
+            <a class="as" href="index.html"><button type="button" style="opacity: 70%;" class="button">Consulta</button></a>
+            <a class="as" href="selecao.html"><button type="button" style="opacity: 90%;" class="button">Cadastro</button></a>
+        </div>
+
+        <div class="form-section">
+            <form class="form-group" id="deviceForm">
+                <select class="form-select" id="deviceType" name="device_type" required>
+                    <option value="" disabled selected>Tipo de dispositivo</option>
+                    <option value="computador">Computador</option>
+                    <option value="monitor">Monitor</option>
+                    <option value="impressora">Impressora</option>
+                    <option value="switch">Switch</option>
+                    <option value="scanner">Scanner</option>
+                    <option value="teclado">Teclado</option>
+                </select>
+                <button type="submit" class="button">Selecionar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('deviceForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const deviceType = document.getElementById('deviceType').value;
+            if (deviceType === 'computador') {
+                window.location.href = '/cadpc.html';
+            } else {
+                // Handle other device types if needed
+                alert('Tipo de dispositivo selecionado: ' + deviceType);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INSS - Página</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Commenting out JavaScript files for testing -->
+    <!-- <script src="/static/inss.js"></script> -->
+    <!-- <script src="/static/script.js"></script> -->
+</head>
+<body>
+    <div class="container">
+        <header class="header"> 
+            <img src="/static/inss-logo.png" alt="Logo INSS" class="logo">
+        </header>
+
+        <div class="top-btns">
+            <a class="as" href="/"><button type="button" style="opacity: 90%;" class="button">Consulta</button></a>
+            <a class="as" href="/selecao"><button type="button" style="opacity: 70%;" class="button">Cadastro</button></a>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" placeholder="Pesquisar" class="search-input" id="search-bar">
+            <button class="filter-button" id="search-btn">⌨️</button>
+        </div>
+        
+        <div class="info-box" id="info-box"></div>
+
+    </div>
+
+    <script>
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const query = document.getElementById('search-bar').value;
+            fetch(`/devices/${query}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data);
+                    if (data.detail) {
+                        alert('Item não encontrado');
+                        return;
+                    }
+                    updateInfoBox([data]); // Update to handle single item
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao buscar dados');
+                });
+        });
+
+        function updateInfoBox(devices) {
+            let infoBoxContent = '';
+            devices.forEach(device => {
+                infoBoxContent += `
+                    <div type="button" class="btn-info-box" id="btn-info-box">
+                        <p><strong>Tipo de dispositivo:</strong> ${device.tipo_de_disp}</p> 
+                        <p><strong>Nº de tombamento:</strong> ${device.id_tomb}</p>
+                        <p><strong>Quantidade de Armazenamento:</strong> ${device.qnt_armaz}</p>
+                        <p><strong>Tipo de Armazenamento:</strong> ${device.tipo_armaz}</p>
+                        <p><strong>Marca:</strong> ${device.marca}</p>
+                        <p><strong>Funcionando:</strong> ${device.funcionando ? 'Sim' : 'Não'}</p>
+                        <p><strong>Data da Análise:</strong> ${device.data_de_an}</p>
+                        <p><strong>Local Atual do Dispositivo:</strong> ${device.locat_do_disp}</p>
+                        <p><strong>Descrição:</strong> ${device.descricao || 'N/A'}</p>
+                        <div class="caract" id="caract">
+                            <div class="card-btns" name="card-btns">
+                                <button class="btn-b" onclick="editItem(${device.id_tomb})">Editar</button>
+                                <button class="btn-c" onclick="deleteItem(${device.id_tomb})">Excluir</button>
+                                <button class="btn-b" onclick="showHistory(${device.id_tomb})">Exibir Histórico</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('info-box').innerHTML = infoBoxContent;
+        }
+
+        function editItem(id_tomb) {
+            window.location.href = `/edit?id=${id_tomb}`;
+        }
+
+        function deleteItem(id_tomb) {
+            fetch(`/devices/${id_tomb}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.status === 204) {
+                    alert('Item excluído com sucesso!');
+                    document.getElementById('search-btn').click(); // Atualiza a busca
+                } else {
+                    alert('Erro ao excluir item');
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+        }
+
+        function showHistory(id_tomb) {
+            window.location.href = `/history?id=${id_tomb}`;
+        }
+    </script>
+</body>
+</html>

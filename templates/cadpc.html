@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Computador</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header"> 
+            <img src="/static/inss-logo.png" alt="Logo INSS" class="logo">
+        </header>
+
+        <h1>Cadastro de Computador</h1>
+        <div class="form-section">
+            <form action="/devices/" method="post" class="form-group">
+                <input type="text" id="id_tomb" name="id_tomb" placeholder="Nº de tombamento" class="form-input" required>
+                <input type="text" id="tipo_de_disp" name="tipo_de_disp" value="computador" class="form-input" readonly required>
+                <input type="text" id="qnt_armaz" name="qnt_armaz" placeholder="Quantidade de Armazenamento" class="form-input" required>
+                <input type="text" id="tipo_armaz" name="tipo_armaz" placeholder="Tipo de Armazenamento" class="form-input" required>
+                <input type="text" id="marca" name="marca" placeholder="Marca" class="form-input" required>
+                <select id="funcionando" name="funcionando" class="form-input" required>
+                    <option value="" disabled selected>Funcionando?</option>
+                    <option value="true">Sim</option>
+                    <option value="false">Não</option>
+                </select>
+                <input type="date" id="data_de_an" name="data_de_an" class="form-input" required>
+                <input type="text" id="locat_do_disp" name="locat_do_disp" placeholder="Local Atual do Dispositivo" class="form-input" required>
+                <textarea id="descricao" name="descricao" placeholder="Descrição" class="form-input desc"></textarea>
+                <button type="submit" class="button">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
