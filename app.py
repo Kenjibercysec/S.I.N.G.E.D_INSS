@@ -8,7 +8,7 @@ from database import get_db, init_db
 from models import Usuario, Device as DeviceModel
 from schemas import Device, DeviceCreate
 import logging
-import multipart  # Ensure this is imported
+#import multipart  # Ensure this is imported
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
@@ -56,7 +56,7 @@ def selecao_post(request: Request, device_type: str = Form(...)):
     logger.info(f"Accessing selecao route with device_type: {device_type}")
     return templates.TemplateResponse("selecao.html", {"request": request})
 
-@app.get("/cadpc.html", response_class=HTMLResponse)
+@app.get("/cadpc", response_class=HTMLResponse)
 def cadpc(request: Request):
     logger.info("Accessing cadpc route")
     return templates.TemplateResponse("cadpc.html", {"request": request})

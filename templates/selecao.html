@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INSS - Página</title>
+    <title>SINGED INSS - selecione</title>
     <link rel="stylesheet" href="/static/style.css">
-    <!-- Commenting out JavaScript files for testing -->
-    <!-- <script src="/static/inss.js"></script> -->
-    <!-- <script src="/static/script.js"></script> -->
+    <script src="../static/inss.js"></script><script src="/static/script.js"></script>
+    <script src="../static/script.js"></script><script src="/static/script.js"></script>
 </head>
 <body>
     <div class="container">
@@ -16,15 +15,15 @@
         </header>
 
         <div class="top-btns">
-            <a class="as" href="index.html"><button type="button" style="opacity: 70%;" class="button">Consulta</button></a>
-            <a class="as" href="selecao.html"><button type="button" style="opacity: 90%;" class="button">Cadastro</button></a>
+            <a class="as" href="/"><button type="button" style="opacity: 70%;" class="button">Consulta</button></a>
+            <a class="as" href="/selecao"><button type="button" style="opacity: 90%;" class="button">Cadastro</button></a>
         </div>
 
         <div class="form-section">
             <form class="form-group" id="deviceForm">
                 <select class="form-select" id="deviceType" name="device_type" required>
                     <option value="" disabled selected>Tipo de dispositivo</option>
-                    <option value="computador">Computador</option>
+                    <a href="/cadpc"><option value="computador">Computador</option> </a>
                     <option value="monitor">Monitor</option>
                     <option value="impressora">Impressora</option>
                     <option value="switch">Switch</option>
