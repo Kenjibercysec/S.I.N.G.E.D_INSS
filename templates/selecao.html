@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SINGED INSS - selecione</title>
     <link rel="stylesheet" href="/static/style.css">
-    <script src="../static/inss.js"></script><script src="/static/script.js"></script>
-    <script src="../static/script.js"></script><script src="/static/script.js"></script>
+    
+
 </head>
 <body>
     <div class="container">
@@ -23,10 +23,10 @@
             <form class="form-group" id="deviceForm">
                 <select class="form-select" id="deviceType" name="device_type" required>
                     <option value="" disabled selected>Tipo de dispositivo</option>
-                    <a href="/cadpc"><option value="computador">Computador</option> </a>
+                    <option value="computador">Computador</option>
                     <option value="monitor">Monitor</option>
                     <option value="impressora">Impressora</option>
-                    <option value="switch">Switch</option>
+                    <option value="switch">Switch</option></a>
                     <option value="scanner">Scanner</option>
                     <option value="teclado">Teclado</option>
                 </select>
@@ -34,17 +34,28 @@
             </form>
         </div>
     </div>
-
+    <script src="../static/inss.js"></script>
     <script>
         document.getElementById('deviceForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const deviceType = document.getElementById('deviceType').value;
             if (deviceType === 'computador') {
-                window.location.href = '/cadpc.html';
+                window.location.href = '/cadpc';
+            } else if (deviceType === 'monitor') {
+                window.location.href = '/cadother';
+            } else if (deviceType === 'impressora') {
+                window.location.href = '/cadother';
+            } else if (deviceType === 'switch') {
+                window.location.href = '/cadother';
+            } else if (deviceType === 'scanner') {
+                window.location.href = '/cadother';
+            } else if (deviceType === 'teclado') {
+                window.location.href = '/cadother';
             } else {
                 // Handle other device types if needed
                 alert('Tipo de dispositivo selecionado: ' + deviceType);
             }
+
         });
     </script>
 </body>
