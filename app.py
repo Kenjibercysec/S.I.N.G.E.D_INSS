@@ -32,10 +32,11 @@ async def startup_event():
 async def shutdown_event():
     logger.info("Shutting down...")
 
-@app.get("/health")
-def health_check():
-    logger.info("Health check route accessed")
-    return {"status": "ok"}
+## Teste de saude das rotas
+##@app.get("/health")         
+##def health_check():
+    ##logger.info("Health check route accessed")
+    ##return {"status": "ok"}
 
 @app.get("/")
 def read_root(request: Request):
@@ -61,11 +62,13 @@ def cadpc(request: Request):
     logger.info("Accessing cadpc route")
     return templates.TemplateResponse("cadpc.html", {"request": request})
 
-@app.get("/api/usuarios")
-def get_usuarios(db: Session = Depends(get_db)):
-    logger.info("Accessing api/usuarios route")
-    usuarios = db.query(Usuario).all()
-    return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
+## Implementacao de rota para cadastro de usuarios, 
+## Possivel feature para log de atividades
+##@app.get("/api/usuarios")
+##def get_usuarios(db: Session = Depends(get_db)):
+    ##logger.info("Accessing api/usuarios route")
+    ##usuarios = db.query(Usuario).all()
+    ##return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
 
 class DeviceCreateForm(BaseModel):
     id_tomb: int
