@@ -62,6 +62,18 @@ def cadpc(request: Request):
     logger.info("Accessing cadpc route")
     return templates.TemplateResponse("cadpc.html", {"request": request})
 
+
+@app.get("/cadother", response_class=HTMLResponse)
+def cadother(request: Request):
+    logger.info("Accessing cadother route")
+    return templates.TemplateResponse("cadother.html", {"request": request})
+
+@app.get("/api/usuarios")
+def get_usuarios(db: Session = Depends(get_db)):
+    logger.info("Accessing api/usuarios route")
+    usuarios = db.query(Usuario).all()
+    return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
+=======
 ## Implementacao de rota para cadastro de usuarios, 
 ## Possivel feature para log de atividades
 ##@app.get("/api/usuarios")
@@ -69,6 +81,7 @@ def cadpc(request: Request):
     ##logger.info("Accessing api/usuarios route")
     ##usuarios = db.query(Usuario).all()
     ##return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
+
 
 class DeviceCreateForm(BaseModel):
     id_tomb: int
@@ -98,7 +111,7 @@ def create_device(
     device_data = DeviceCreateForm(
         id_tomb=id_tomb,
         tipo_de_disp=tipo_de_disp,
-        qnt_armaz=str(qnt_armaz),  # Ensure qnt_armaz is handled as a string
+        qnt_armaz=str(qnt_armaz),  
         tipo_armaz=tipo_armaz,
         marca=marca,
         funcionando=funcionando,
