@@ -9,7 +9,7 @@ body {
 }
 
 .container {
-    width: 600px;
+    width: 650px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -120,6 +120,7 @@ background-color:  #f63b3b;
     flex-direction: column;
     gap: 15px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 70px;
 }
 
 .form-group {
@@ -158,6 +159,7 @@ background-color:  #f63b3b;
     cursor: pointer;
  
 }
+
 
 
 .info-box {
