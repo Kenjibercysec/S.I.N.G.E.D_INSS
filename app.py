@@ -1,14 +1,13 @@
-from fastapi import FastAPI, Depends, Request, HTTPException, Form
+from fastapi import FastAPI, Depends, Request, HTTPException, Form, Body  # Adicionar Body para receber JSON
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db, init_db
-from models import Usuario, Device as DeviceModel
-from schemas import Device, DeviceCreate
+from models import Usuario, Dispositivo as DispositivoModel
+from schemas import Dispositivo, DispositivoCreate
 import logging
-#import multipart  # Ensure this is imported
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
@@ -31,12 +30,6 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Shutting down...")
-
-## Teste de saude das rotas
-##@app.get("/health")         
-##def health_check():
-    ##logger.info("Health check route accessed")
-    ##return {"status": "ok"}
 
 @app.get("/")
 def read_root(request: Request):
@@ -62,7 +55,6 @@ def cadpc(request: Request):
     logger.info("Accessing cadpc route")
     return templates.TemplateResponse("cadpc.html", {"request": request})
 
-
 @app.get("/cadother", response_class=HTMLResponse)
 def cadother(request: Request):
     logger.info("Accessing cadother route")
@@ -73,17 +65,8 @@ def get_usuarios(db: Session = Depends(get_db)):
     logger.info("Accessing api/usuarios route")
     usuarios = db.query(Usuario).all()
     return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
-=======
-## Implementacao de rota para cadastro de usuarios, 
-## Possivel feature para log de atividades
-##@app.get("/api/usuarios")
-##def get_usuarios(db: Session = Depends(get_db)):
-    ##logger.info("Accessing api/usuarios route")
-    ##usuarios = db.query(Usuario).all()
-    ##return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
 
-
-class DeviceCreateForm(BaseModel):
+class DispositivoCreateForm(BaseModel):
     id_tomb: int
     tipo_de_disp: str
     qnt_armaz: str
@@ -94,66 +77,54 @@ class DeviceCreateForm(BaseModel):
     locat_do_disp: str
     descricao: Optional[str] = None
 
-@app.post("/devices/", response_model=Device)
-def create_device(
-    id_tomb: int = Form(...),
-    tipo_de_disp: str = Form(...),
-    qnt_armaz: str = Form(...),
-    tipo_armaz: str = Form(...),
-    marca: str = Form(...),
-    funcionando: bool = Form(...),
-    data_de_an: date = Form(...),
-    locat_do_disp: str = Form(...),
-    descricao: Optional[str] = Form(None),
+@app.post("/dispositivos/", response_model=Dispositivo)
+def create_dispositivo(
+    dispositivo: DispositivoCreate = Body(...),  # Receber os dados no corpo da requisição como JSON
     db: Session = Depends(get_db)
 ):
-    logger.info("Creating a new device")
-    device_data = DeviceCreateForm(
-        id_tomb=id_tomb,
-        tipo_de_disp=tipo_de_disp,
-        qnt_armaz=str(qnt_armaz),  
-        tipo_armaz=tipo_armaz,
-        marca=marca,
-        funcionando=funcionando,
-        data_de_an=data_de_an,
-        locat_do_disp=locat_do_disp,
-        descricao=descricao
-    )
-    db_device = DeviceModel(**device_data.dict())
+    logger.info(f"Received POST request to /dispositivos/ with data: {dispositivo.dict()}")
+    db_dispositivo = DispositivoModel(**dispositivo.dict())
     try:
-        db.add(db_device)
+        db.add(db_dispositivo)
         db.commit()
-        db.refresh(db_device)
-    except IntegrityError:
+        db.refresh(db_dispositivo)
+        logger.info(f"Dispositivo created successfully: {db_dispositivo}")
+    except IntegrityError as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Device with this ID already exists")
-    return db_device
+        logger.error(f"IntegrityError: {e}")
+        raise HTTPException(status_code=400, detail="Dispositivo with this ID already exists")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+    return db_dispositivo
 
-@app.get("/devices/{id_tomb}", response_model=Device)
-def read_device(id_tomb: int, db: Session = Depends(get_db)):
-    logger.info(f"Reading device with id_tomb: {id_tomb}")
-    device = db.query(DeviceModel).filter(DeviceModel.id_tomb == id_tomb).first()
-    if device is None:
-        raise HTTPException(status_code=404, detail="Device not found")
-    return device
+@app.get("/dispositivos/{id_tomb}", response_model=Dispositivo)
+def read_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
+    logger.info(f"Attempting to read dispositivo with id_tomb: {id_tomb}")
+    dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
+    if dispositivo is None:
+        logger.warning(f"Dispositivo with id_tomb {id_tomb} not found")
+        raise HTTPException(status_code=404, detail="Dispositivo not found")
+    logger.info(f"Dispositivo found: {dispositivo}")
+    return dispositivo
 
-@app.delete("/devices/{id_tomb}")
-def delete_device(id_tomb: int, db: Session = Depends(get_db)):
-    logger.info(f"Deleting device with id_tomb: {id_tomb}")
-    device = db.query(DeviceModel).filter(DeviceModel.id_tomb == id_tomb).first()
-    if device is None:
-        raise HTTPException(status_code=404, detail="Device not found")
-    db.delete(device)
+@app.delete("/dispositivos/{id_tomb}")
+def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
+    logger.info(f"Deleting dispositivo with id_tomb: {id_tomb}")
+    dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
+    if dispositivo is None:
+        raise HTTPException(status_code=404, detail="Dispositivo not found")
+    db.delete(dispositivo)
     db.commit()
-    return {"detail": "Device deleted successfully"}
+    return {"detail": "Dispositivo deleted successfully"}
 
-@app.get("/devices/{query}")
-def search_devices(query: int, db: Session = Depends(get_db)):
-    logger.info(f"Searching devices with query: {query}")
-    device = db.query(DeviceModel).filter(DeviceModel.id_tomb == query).first()
-    if not device:
-        raise HTTPException(status_code=404, detail="Device not found")
-    return device
+@app.get("/dispositivos/search/{query}")
+def search_dispositivos(query: int, db: Session = Depends(get_db)):
+    logger.info(f"Searching dispositivos with query: {query}")
+    dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == query).first()
+    if not dispositivo:
+        raise HTTPException(status_code=404, detail="Dispositivo not found")
+    return dispositivo
 
 if __name__ == "__main__":
     import uvicorn

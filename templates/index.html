@@ -48,5 +48,54 @@
 
         <script src="../static/inss.js"></script>
         <script src="../static/script.js"></script>
-</body>
+        <script>
+            document.getElementById("search-btn").addEventListener("click", async () => {
+                const searchBar = document.getElementById("search-bar");
+                const query = searchBar.value.trim();
+                if (!query) {
+                    alert("Por favor, insira um ID para pesquisar.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/dispositivos/${query}`);
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            alert("Dispositivo não encontrado.");
+                        } else {
+                            alert("Erro ao buscar dispositivo.");
+                        }
+                        return;
+                    }
+
+                    const dispositivo = await response.json();
+
+                    // Populate the dropdown with the fetched data
+                    document.getElementById("btn-info-box").innerHTML = `
+                        <p><strong>Tipo de dispositivo:</strong> ${dispositivo.tipo_de_disp || "N/A"}</p>
+                        <p><strong>Nº de tombamento:</strong> ${dispositivo.id_tomb || "N/A"}</p>
+                    `;
+
+                    document.getElementById("caract").innerHTML = `
+                        <p>Marca: ${dispositivo.marca || "N/A"}</p>
+                        <p>Quantidade de Memória RAM: ${dispositivo.qnt_mem || "N/A"}</p>
+                        <p>Quantidade de Armazenamento: ${dispositivo.qnt_armaz || "N/A"}</p>
+                        <p>Tipo de Armazenamento: ${dispositivo.tipo_armaz || "N/A"}</p>
+                        <p>Funcionando: ${dispositivo.funcionando ? "Sim" : "Não"}</p>
+                        <p>Local Atual do Dispositivo: ${dispositivo.locat_do_disp || "N/A"}</p>
+                        <p>Descrição: ${dispositivo.descricao || "N/A"}</p>
+                        <p>Data da Análise: ${dispositivo.data_de_an || "N/A"}</p>
+                        <div class="card-btns" name="card-btns">
+                            <button class="btn-b">Editar</button>
+                            <button class="btn-c">Excluir</button>
+                            <button class="btn-b">Exibir Histórico</button>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error("Erro ao buscar dispositivo:", error);
+                    alert("Erro ao buscar dispositivo.");
+                }
+            });
+        </script>
+    </body>
 </html>

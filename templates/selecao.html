@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device=1.0">
     <title>SINGED INSS - selecione</title>
     <link rel="stylesheet" href="/static/style.css">
     
@@ -36,26 +36,35 @@
     </div>
     <script src="../static/inss.js"></script>
     <script>
-        document.getElementById('deviceForm').addEventListener('submit', function(event) {
+        document.getElementById('deviceForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             const deviceType = document.getElementById('deviceType').value;
-            if (deviceType === 'computador') {
-                window.location.href = '/cadpc';
-            } else if (deviceType === 'monitor') {
-                window.location.href = '/cadother';
-            } else if (deviceType === 'impressora') {
-                window.location.href = '/cadother';
-            } else if (deviceType === 'switch') {
-                window.location.href = '/cadother';
-            } else if (deviceType === 'scanner') {
-                window.location.href = '/cadother';
-            } else if (deviceType === 'teclado') {
-                window.location.href = '/cadother';
-            } else {
-                // Handle other device types if needed
-                alert('Tipo de dispositivo selecionado: ' + deviceType);
-            }
 
+            try {
+                const response = await fetch('http://127.0.0.1:8000/dispositivos/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ device_type: deviceType }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to connect to the server. Please try again later.');
+                }
+
+                const result = await response.json();
+                alert('Device registered successfully: ' + JSON.stringify(result));
+
+                if (deviceType === 'computador') {
+                    window.location.href = '/cadpc';
+                } else {
+                    window.location.href = '/cadother';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to the server: ' + error.message);
+            }
         });
     </script>
 </body>

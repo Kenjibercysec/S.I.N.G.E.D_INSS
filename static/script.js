@@ -1,18 +1,44 @@
 document.getElementById('cadastroForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const nome = document.getElementById('nome').value;
+
+    const id_tomb = document.getElementById('id_tomb').value;
+    const tipo_de_disp = document.getElementById('tipo_de_disp').value;
+    const qnt_armaz = document.getElementById('qnt_armaz').value;
+    const tipo_armaz = document.getElementById('tipo_armaz').value;
+    const marca = document.getElementById('marca').value;
+    const funcionando = document.getElementById('funcionando').value === 'true';
+    const data_de_an = document.getElementById('data_de_an').value;
+    const locat_do_disp = document.getElementById('locat_do_disp').value;
     const descricao = document.getElementById('descricao').value;
 
-    const response = await fetch('http://localhost:8000/items/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nome, description: descricao }),
-    });
+    const dispositivo = {
+        id_tomb,
+        tipo_de_disp,
+        qnt_armaz,
+        tipo_armaz,
+        marca,
+        funcionando,
+        data_de_an,
+        locat_do_disp,
+        descricao
+    };
 
-    if (response.ok) {
-        alert('Equipamento cadastrado com sucesso!');
-    } else {
-        alert('Erro ao cadastrar equipamento');
+    try {
+        const response = await fetch('/dispositivos/', { // Certifique-se de que a rota está correta
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dispositivo),
+        });
+
+        if (response.ok) {
+            alert('Dispositivo cadastrado com sucesso!');
+        } else {
+            const errorData = await response.json();
+            alert(`Erro ao cadastrar dispositivo: ${errorData.detail}`);
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao cadastrar dispositivo.');
     }
 });
 
@@ -51,7 +77,7 @@ async function carregarEquipamentos() {
 //função de busca search bar 
 document.getElementById('search-btn').addEventListener('click', function() {
     const query = document.getElementById('search-bar').value;
-    fetch(`/devices/${query}`)
+    fetch(`/dispositivos/${query}`)
     .then(response => {
         if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -64,7 +90,7 @@ document.getElementById('search-btn').addEventListener('click', function() {
             alert('Item não encontrado');
             return;
         }
-        updateInfoBox([data]); // Update to handle single item
+        updateInfoBox([data]); // Atualiza a interface com os dados do dispositivo
     })
     .catch(error => {
         console.error('Erro:', error);
@@ -72,52 +98,52 @@ document.getElementById('search-btn').addEventListener('click', function() {
     });
 });
 
-function updateInfoBox(devices) {
-let infoBoxContent = '';
-devices.forEach(device => {
-    infoBoxContent += `
-        <div type="button" class="btn-info-box" id="btn-info-box">
-            <p><strong>Tipo de dispositivo:</strong> ${devices.tipo_de_disp}</p> 
-            <p><strong>Nº de tombamento:</strong> ${devices.id_tomb}</p>
-            <p><strong>Quantidade de Armazenamento:</strong> ${devices.qnt_armaz}</p>
-            <p><strong>Tipo de Armazenamento:</strong> ${devices.tipo_armaz}</p>
-            <p><strong>Marca:</strong> ${devices.marca}</p>
-            <p><strong>Funcionando:</strong> ${devices.funcionando ? 'Sim' : 'Não'}</p>
-            <p><strong>Data da Análise:</strong> ${devices.data_de_an}</p>
-            <p><strong>Local Atual do Dispositivo:</strong> ${devices.locat_do_disp}</p>
-            <p><strong>Descrição:</strong> ${devices.descricao || 'N/A'}</p>
-            <div class="caract" id="caract">
-                <div class="card-btns" name="card-btns">
-                    <button class="btn-b" onclick="editItem(${devices.id_tomb})">Editar</button>
-                    <button class="btn-c" onclick="deleteItem(${devices.id_tomb})">Excluir</button>
-                    <button class="btn-b" onclick="showHistory(${devices.id_tomb})">Exibir Histórico</button>
+function updateInfoBox(dispositivos) {
+    let infoBoxContent = '';
+    dispositivos.forEach(dispositivo => {
+        infoBoxContent += `
+            <div type="button" class="btn-info-box" id="btn-info-box">
+                <p><strong>Tipo de dispositivo:</strong> ${dispositivo.tipo_de_disp}</p> 
+                <p><strong>Nº de tombamento:</strong> ${dispositivo.id_tomb}</p>
+                <p><strong>Quantidade de Armazenamento:</strong> ${dispositivo.qnt_armaz}</p>
+                <p><strong>Tipo de Armazenamento:</strong> ${dispositivo.tipo_armaz}</p>
+                <p><strong>Marca:</strong> ${dispositivo.marca}</p>
+                <p><strong>Funcionando:</strong> ${dispositivo.funcionando ? 'Sim' : 'Não'}</p>
+                <p><strong>Data da Análise:</strong> ${dispositivo.data_de_an}</p>
+                <p><strong>Local Atual do Dispositivo:</strong> ${dispositivo.locat_do_disp}</p>
+                <p><strong>Descrição:</strong> ${dispositivo.descricao || 'N/A'}</p>
+                <div class="caract" id="caract">
+                    <div class="card-btns" name="card-btns">
+                        <button class="btn-b" onclick="editItem(${dispositivo.id_tomb})">Editar</button>
+                        <button class="btn-c" onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
+                        <button class="btn-b" onclick="showHistory(${dispositivo.id_tomb})">Exibir Histórico</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
-});
-document.getElementById('info-box').innerHTML = infoBoxContent;
+        `;
+    });
+    document.getElementById('info-box').innerHTML = infoBoxContent;
 }
 
 function editItem(id_tomb) {
-window.location.href = `/edit?id=${id_tomb}`;
+    window.location.href = `/edit?id=${id_tomb}`;
 }
 
 function deleteItem(id_tomb) {
-fetch(`/devices/${id_tomb}`, {
-    method: 'DELETE'
-})
-.then(response => {
-    if (response.status === 204) {
-        alert('Item excluído com sucesso!');
-        document.getElementById('search-btn').click(); // Atualiza a busca
-    } else {
-        alert('Erro ao excluir item');
-    }
-})
-.catch(error => console.error('Erro:', error));
+    fetch(`/dispositivos/${id_tomb}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (response.status === 204) {
+            alert('Item excluído com sucesso!');
+            document.getElementById('search-btn').click(); // Atualiza a busca
+        } else {
+            alert('Erro ao excluir item');
+        }
+    })
+    .catch(error => console.error('Erro:', error));
 }
 
 function showHistory(id_tomb) {
-window.location.href = `/history?id=${id_tomb}`;
+    window.location.href = `/history?id=${id_tomb}`;
 }

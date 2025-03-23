@@ -7,8 +7,9 @@ class Usuario(Base):
     nome = Column(String, index=True)
     email = Column(String, unique=True, index=True)
 
-class Device(Base):
-    __tablename__ = "dispositivos"  # Change this to match your SQL script
+class Dispositivo(Base):
+    __tablename__ = "dispositivos"
+    
     id_tomb = Column(Integer, primary_key=True, index=True)
     tipo_de_disp = Column(String, index=True)
     marca = Column(String)

@@ -2,21 +2,21 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import date
 
-class DeviceBase(BaseModel):
+class DispositivoBase(BaseModel):
+    id_tomb: int
     tipo_de_disp: str
-    qnt_armaz: str
-    tipo_armaz: str
     marca: str
-    funcionando: bool
-    data_de_an: date
-    locat_do_disp: str
+    qnt_ram: Optional[int] = None
+    qnt_armaz: Optional[int] = None
+    tipo_armaz: Optional[str] = None
+    funcionando: Optional[bool] = None
+    locat_do_disp: Optional[str] = None
     descricao: Optional[str] = None
+    data_de_an: Optional[date] = None
 
-class DeviceCreate(DeviceBase):
+class DispositivoCreate(DispositivoBase):
     pass
 
-class Device(DeviceBase):
-    id_tomb: int
-
+class Dispositivo(DispositivoBase):
     class Config:
         from_attributes = True
