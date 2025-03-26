@@ -40,8 +40,14 @@
             event.preventDefault();
             const deviceType = document.getElementById('deviceType').value;
 
+            if (deviceType === 'computador') {
+                    window.location.href = '/cadpc';
+                } else {
+                    window.location.href = '/cadother';
+                }
+                
             try {
-                const response = await fetch('http://127.0.0.1:8000/dispositivos/', {
+                const response = await fetch('http://127.0.0.1:8080/dispositivos/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -56,11 +62,6 @@
                 const result = await response.json();
                 alert('Device registered successfully: ' + JSON.stringify(result));
 
-                if (deviceType === 'computador') {
-                    window.location.href = '/cadpc';
-                } else {
-                    window.location.href = '/cadother';
-                }
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error connecting to the server: ' + error.message);

@@ -77,11 +77,17 @@ class DispositivoCreateForm(BaseModel):
     locat_do_disp: str
     descricao: Optional[str] = None
 
-@app.post("/dispositivos/", response_model=Dispositivo)
-def create_dispositivo(
-    dispositivo: DispositivoCreate = Body(...),  # Receber os dados no corpo da requisição como JSON
+##@app.post("/dispositivo/", response_model=Dispositivo)
+##def create_dispositivo(
+##    dispositivo: DispositivoCreate = Body(...),  # Receber os dados no corpo da requisição como JSON
+##    db: Session = Depends(get_db)
+##):
+@app.post("/dispositivos/{id_tomb}", response_model=Dispositivo)
+def create_dispositivo_by_id_tomb(
+    id_tomb: int,
+    dispositivo: DispositivoCreate = Body(...),
     db: Session = Depends(get_db)
-):
+    ):
     logger.info(f"Received POST request to /dispositivos/ with data: {dispositivo.dict()}")
     db_dispositivo = DispositivoModel(**dispositivo.dict())
     try:
