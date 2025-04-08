@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db, init_db
 from models import Usuario, Dispositivo as DispositivoModel
-from schemas import Dispositivo, DispositivoCreate
+from schemas import DispositivoOut, DispositivoCreate  # Corrigir a importação
 import logging
 from pydantic import BaseModel
 from typing import Optional
@@ -82,7 +82,7 @@ class DispositivoCreateForm(BaseModel):
 ##    dispositivo: DispositivoCreate = Body(...),  # Receber os dados no corpo da requisição como JSON
 ##    db: Session = Depends(get_db)
 ##):
-@app.post("/dispositivos/{id_tomb}", response_model=Dispositivo)
+@app.post("/dispositivos/{id_tomb}", response_model=DispositivoOut)
 def create_dispositivo_by_id_tomb(
     id_tomb: int,
     dispositivo: DispositivoCreate = Body(...),
@@ -104,7 +104,7 @@ def create_dispositivo_by_id_tomb(
         raise HTTPException(status_code=500, detail="Internal server error")
     return db_dispositivo
 
-@app.get("/dispositivos/{id_tomb}", response_model=Dispositivo)
+@app.get("/dispositivos/{id_tomb}", response_model=DispositivoOut)  # Usar DispositivoOut
 def read_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
     logger.info(f"Attempting to read dispositivo with id_tomb: {id_tomb}")
     dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
@@ -125,13 +125,22 @@ def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
     return {"detail": "Dispositivo deleted successfully"}
 
 @app.get("/dispositivos/search/{query}")
-def search_dispositivos(query: int, db: Session = Depends(get_db)):
+def search_dispositivos(query: str, db: Session = Depends(get_db)):
     logger.info(f"Searching dispositivos with query: {query}")
-    dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == query).first()
-    if not dispositivo:
-        raise HTTPException(status_code=404, detail="Dispositivo not found")
-    return dispositivo
+    dispositivos = db.query(DispositivoModel).filter(
+        DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
+        DispositivoModel.marca.ilike(f"%{query}%") |
+        DispositivoModel.locat_do_disp.ilike(f"%{query}%")
+    ).all()
+    if not dispositivos:
+        logger.warning(f"No dispositivos found for query: {query}")
+        raise HTTPException(status_code=404, detail="No dispositivos found")
+    logger.info(f"Found dispositivos: {dispositivos}")
+    return dispositivos
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)
+
+
+

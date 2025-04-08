@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date
+from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, String, Boolean, Date, Text, func
 from database import Base
 
 class Usuario(Base):
@@ -9,14 +9,25 @@ class Usuario(Base):
 
 class Dispositivo(Base):
     __tablename__ = "dispositivos"
-    
+
     id_tomb = Column(Integer, primary_key=True, index=True)
-    tipo_de_disp = Column(String, index=True)
-    marca = Column(String)
+    tipo_de_disp = Column(String(50), nullable=False)
     qnt_ram = Column(Integer)
     qnt_armaz = Column(Integer)
-    tipo_armaz = Column(String)
+    tipo_armaz = Column(String(10))
+    marca = Column(String(50), nullable=False)
+    modelo = Column(String(50), nullable=False)  # Alterar para permitir valores nulos
     funcionando = Column(Boolean)
-    locat_do_disp = Column(String)
-    descricao = Column(String, nullable=True)
     data_de_an = Column(Date)
+    locat_do_disp = Column(String(100))
+    descricao = Column(Text)
+
+class LogAtualizacao(Base):
+    __tablename__ = "log_atualizacoes"
+
+    id_log = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id_tomb = Column(Integer, ForeignKey("dispositivos.id_tomb"), nullable=False)
+    campo_alterado = Column(String(50))
+    valor_antigo = Column(Text)
+    valor_novo = Column(Text)
+    data_hora_alteracao = Column(TIMESTAMP, server_default=func.now())
