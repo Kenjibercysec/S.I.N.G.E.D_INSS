@@ -3,9 +3,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-
-##DATABASE_URL = "sqlite:////home/kenji/Desktop/S.I.N.G.E.D_INSS/devices.db"  # Update this to your database URL
-DATABASE_URL = "sqlite:///C:/Users/vitor/PROJETOS/S.I.N.G.E.D_INSS/devices.db"  # Update this to your database URL
+ ####################### AlTERE ###########################
+##DATABASE_URL = "sqlite:////home/kenji/Desktop/S.I.N.G.E.D_INSS/dispositivos.db"  # Update this to your database URL
+DATABASE_URL = "sqlite:///C:/Users/vitor/PROJETOS/S.I.N.G.E.D_INSS/dispositivos.db"  
 
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -16,6 +16,7 @@ def init_db():
     import models
 
     Base.metadata.create_all(bind=engine)
+    ############### ALTERE ###########################
     load_sql_script("C:/Users/vitor/PROJETOS/S.I.N.G.E.D_INSS/BANCO DE DADOS DOS DISPOSITIVOS .sql")
     ##load_sql_script("/home/kenji/Desktop/S.I.N.G.E.D_INSS/BANCO DE DADOS DOS DISPOSITIVOS .sql") ##linuxmint
     ##load_sql_script("C:/Users/silas/OneDrive/Desktop/SINGED_/BANCO DE DADOS DOS DISPOSITIVOS .sql")
