@@ -221,3 +221,16 @@ background-color:  #f63b3b;
     margin-bottom: 10px;
     border-radius: 5px;
 }
+
+
+.date_div {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+
+#data_de_an {
+    width: 75%;
+}
