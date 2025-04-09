@@ -1,44 +1,37 @@
 document.getElementById('cadastroForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const id_tomb = document.getElementById('id_tomb').value;
-    const tipo_de_disp = document.getElementById('tipo_de_disp').value;
-    const qnt_armaz = document.getElementById('qnt_armaz').value;
-    const tipo_armaz = document.getElementById('tipo_armaz').value;
-    const marca = document.getElementById('marca').value;
-    const funcionando = document.getElementById('funcionando').value === 'true';
-    const data_de_an = document.getElementById('data_de_an').value;
-    const locat_do_disp = document.getElementById('locat_do_disp').value;
-    const descricao = document.getElementById('descricao').value;
-
-    const dispositivo = {
-        id_tomb,
-        tipo_de_disp,
-        qnt_armaz,
-        tipo_armaz,
-        marca,
-        funcionando,
-        data_de_an,
-        locat_do_disp,
-        descricao
+    const formData = {
+        id_tomb: parseInt(document.getElementById('id_tomb').value),
+        tipo_de_disp: 'Computador',
+        qnt_ram: parseInt(document.getElementById('qnt_ram').value),
+        qnt_armaz: parseInt(document.getElementById('qnt_armaz').value),
+        tipo_armaz: document.getElementById('tipo_armaz').value,
+        marca: document.getElementById('marca').value,
+        modelo: document.getElementById('modelo')?.value || 'Não especificado',
+        funcionando: document.getElementById('funcionando').value === 'true',
+        data_de_an: document.getElementById('data_de_an').value,
+        locat_do_disp: document.getElementById('locat_do_disp').value,
+        descricao: document.getElementById('descricao').value
     };
 
     try {
-        const response = await fetch('/dispositivos/', { // Certifique-se de que a rota está correta
+        const response = await fetch('/dispositivos/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dispositivo),
+            body: JSON.stringify(formData),
         });
 
         if (response.ok) {
             alert('Dispositivo cadastrado com sucesso!');
+            window.location.href = '/';
         } else {
             const errorData = await response.json();
             alert(`Erro ao cadastrar dispositivo: ${errorData.detail}`);
         }
     } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao cadastrar dispositivo.');
+        alert('Erro ao cadastrar dispositivo. Por favor, tente novamente.');
     }
 });
 
@@ -74,76 +67,270 @@ async function carregarEquipamentos() {
     // Atualizar a tabela com os dados recebidos
 }
 
-//função de busca search bar 
-document.getElementById('search-btn').addEventListener('click', function() {
+// Função de busca
+document.getElementById('search-btn').addEventListener('click', async function() {
     const query = document.getElementById('search-bar').value;
-    fetch(`/dispositivos/${query}`)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+    try {
+        const response = await fetch(`/dispositivos/search/${query}`);
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+            updateInfoBox(data.results);
+        } else {
+            alert('Nenhum dispositivo encontrado');
         }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data);
-        if (data.detail) {
-            alert('Item não encontrado');
-            return;
-        }
-        updateInfoBox([data]); // Atualiza a interface com os dados do dispositivo
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao buscar dados');
-    });
+        alert('Erro ao buscar dispositivos');
+    }
 });
 
 function updateInfoBox(dispositivos) {
-    let infoBoxContent = '';
+    const infoBox = document.getElementById('info-box');
+    if (!infoBox) return;
+
+    infoBox.innerHTML = '';
     dispositivos.forEach(dispositivo => {
-        infoBoxContent += `
-            <div type="button" class="btn-info-box" id="btn-info-box">
-                <p><strong>Tipo de dispositivo:</strong> ${dispositivo.tipo_de_disp}</p> 
-                <p><strong>Nº de tombamento:</strong> ${dispositivo.id_tomb}</p>
-                <p><strong>Quantidade de Armazenamento:</strong> ${dispositivo.qnt_armaz}</p>
-                <p><strong>Tipo de Armazenamento:</strong> ${dispositivo.tipo_armaz}</p>
-                <p><strong>Marca:</strong> ${dispositivo.marca}</p>
-                <p><strong>Funcionando:</strong> ${dispositivo.funcionando ? 'Sim' : 'Não'}</p>
-                <p><strong>Data da Análise:</strong> ${dispositivo.data_de_an}</p>
-                <p><strong>Local Atual do Dispositivo:</strong> ${dispositivo.locat_do_disp}</p>
-                <p><strong>Descrição:</strong> ${dispositivo.descricao || 'N/A'}</p>
-                <div class="caract" id="caract">
-                    <div class="card-btns" name="card-btns">
-                        <button class="btn-b" onclick="editItem(${dispositivo.id_tomb})">Editar</button>
-                        <button class="btn-c" onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
-                        <button class="btn-b" onclick="showHistory(${dispositivo.id_tomb})">Exibir Histórico</button>
-                    </div>
+        const dispositivoDiv = document.createElement('div');
+        dispositivoDiv.className = 'dispositivo-item';
+        dispositivoDiv.innerHTML = `
+            <h3>Dispositivo #${dispositivo.id_tomb}</h3>
+            <p><strong>Tipo:</strong> ${dispositivo.tipo_de_disp}</p>
+            <p><strong>Marca:</strong> ${dispositivo.marca}</p>
+            <p><strong>Modelo:</strong> ${dispositivo.modelo}</p>
+            <p><strong>Localização:</strong> ${dispositivo.locat_do_disp}</p>
+            <p><strong>Status:</strong> ${dispositivo.funcionando ? 'Funcionando' : 'Não funcionando'}</p>
+            <div class="action-buttons">
+                <button onclick="editItem(${dispositivo.id_tomb})">Editar</button>
+                <button onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
+                <button onclick="showHistory(${dispositivo.id_tomb})">Histórico</button>
+            </div>
+        `;
+        infoBox.appendChild(dispositivoDiv);
+    });
+}
+
+async function editItem(id_tomb) {
+    try {
+        const response = await fetch(`/dispositivos/${id_tomb}`);
+        const dispositivo = await response.json();
+        
+        // Preencher o formulário com os dados do dispositivo
+        document.getElementById('id_tomb').value = dispositivo.id_tomb;
+        document.getElementById('tipo_de_disp').value = dispositivo.tipo_de_disp;
+        document.getElementById('qnt_ram').value = dispositivo.qnt_ram;
+        document.getElementById('qnt_armaz').value = dispositivo.qnt_armaz;
+        document.getElementById('tipo_armaz').value = dispositivo.tipo_armaz;
+        document.getElementById('marca').value = dispositivo.marca;
+        document.getElementById('modelo').value = dispositivo.modelo;
+        document.getElementById('funcionando').value = dispositivo.funcionando;
+        document.getElementById('data_de_an').value = dispositivo.data_de_an;
+        document.getElementById('locat_do_disp').value = dispositivo.locat_do_disp;
+        document.getElementById('descricao').value = dispositivo.descricao;
+        
+        // Mudar para modo de edição
+        document.getElementById('cadastroForm').dataset.mode = 'edit';
+        document.getElementById('cadastroForm').dataset.id = id_tomb;
+        
+        // Redirecionar para a página de cadastro
+        window.location.href = '/cadpc';
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao carregar dados do dispositivo');
+    }
+}
+
+async function deleteItem(id_tomb) {
+    if (confirm('Tem certeza que deseja excluir este dispositivo?')) {
+        try {
+            const response = await fetch(`/dispositivos/${id_tomb}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                alert('Dispositivo excluído com sucesso!');
+                window.location.reload();
+            } else {
+                const errorData = await response.json();
+                alert(`Erro ao excluir dispositivo: ${errorData.detail}`);
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao excluir dispositivo');
+        }
+    }
+}
+
+async function showHistory(id_tomb) {
+    try {
+        const response = await fetch(`/dispositivos/${id_tomb}/history`);
+        const data = await response.json();
+        
+        if (!data.results || data.results.length === 0) {
+            alert('Nenhum histórico encontrado para este dispositivo');
+            return;
+        }
+        
+        // Criar modal para exibir o histórico
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Histórico do Dispositivo #${id_tomb}</h2>
+                <div class="history-list">
+                    ${data.results.map(item => `
+                        <div class="history-item">
+                            <p><strong>Data:</strong> ${new Date(item.data_hora_alteracao).toLocaleString()}</p>
+                            <p><strong>Campo:</strong> ${item.campo_alterado}</p>
+                            <p><strong>Valor anterior:</strong> ${item.valor_antigo}</p>
+                            <p><strong>Novo valor:</strong> ${item.valor_novo}</p>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `;
-    });
-    document.getElementById('info-box').innerHTML = infoBoxContent;
+        
+        // Adicionar o modal ao documento
+        document.body.appendChild(modal);
+        
+        // Configurar o botão de fechar
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.onclick = function() {
+            modal.remove();
+        };
+        
+        // Fechar o modal ao clicar fora dele
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.remove();
+            }
+        };
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao carregar histórico');
+    }
 }
 
-function editItem(id_tomb) {
-    window.location.href = `/edit?id=${id_tomb}`;
+function toggleEditMode(id_tomb) {
+    const isEditMode = document.getElementById('caract').dataset.editMode === 'true';
+    
+    if (!isEditMode) {
+        // Entrar no modo de edição
+        document.getElementById('caract').dataset.editMode = 'true';
+        
+        // Substituir spans por inputs com dropdowns
+        const marca = document.getElementById('marca-text').textContent;
+        document.getElementById('marca-text').outerHTML = `
+            <select id="edit-marca" class="form-select">
+                <option value="" disabled selected>Selecione a marca</option>
+                <option value="positivo" ${marca === 'positivo' ? 'selected' : ''}>Positivo</option>
+                <option value="Lenovo" ${marca === 'Lenovo' ? 'selected' : ''}>Lenovo</option>
+                <option value="daten" ${marca === 'daten' ? 'selected' : ''}>Daten</option>
+                <option value="dell" ${marca === 'dell' ? 'selected' : ''}>Dell</option>
+                <option value="hp" ${marca === 'hp' ? 'selected' : ''}>HP</option>
+                <option value="acer" ${marca === 'acer' ? 'selected' : ''}>Acer</option>
+            </select>
+        `;
+
+        const qntRam = document.getElementById('qnt_ram-text').textContent;
+        document.getElementById('qnt_ram-text').outerHTML = `
+            <select id="edit-qnt_ram" class="form-select">
+                <option value="" disabled selected>Quantidade de memória RAM</option>
+                <option value="0" ${qntRam === '0' ? 'selected' : ''}>Sem memória RAM</option>
+                <option value="1" ${qntRam === '1' ? 'selected' : ''}>1 GB</option>
+                <option value="2" ${qntRam === '2' ? 'selected' : ''}>2 GB</option>
+                <option value="4" ${qntRam === '4' ? 'selected' : ''}>4 GB</option>
+                <option value="6" ${qntRam === '6' ? 'selected' : ''}>6 GB</option>
+                <option value="8" ${qntRam === '8' ? 'selected' : ''}>8 GB</option>
+                <option value="12" ${qntRam === '12' ? 'selected' : ''}>12 GB</option>
+                <option value="16" ${qntRam === '16' ? 'selected' : ''}>16 GB</option>
+            </select>
+        `;
+
+        const qntArmaz = document.getElementById('qnt_armaz-text').textContent;
+        document.getElementById('qnt_armaz-text').outerHTML = `
+            <select id="edit-qnt_armaz" class="form-select">
+                <option value="" disabled selected>Quantidade de Armazenamento</option>
+                <option value="0" ${qntArmaz === '0' ? 'selected' : ''}>Sem Armazenamento</option>
+                <option value="120" ${qntArmaz === '120' ? 'selected' : ''}>120 GB</option>
+                <option value="128" ${qntArmaz === '128' ? 'selected' : ''}>128 GB</option>
+                <option value="160" ${qntArmaz === '160' ? 'selected' : ''}>160 GB</option>
+                <option value="320" ${qntArmaz === '320' ? 'selected' : ''}>320 GB</option>
+                <option value="500" ${qntArmaz === '500' ? 'selected' : ''}>500 GB</option>
+                <option value="1000" ${qntArmaz === '1000' ? 'selected' : ''}>1 TB</option>
+            </select>
+        `;
+
+        const tipoArmaz = document.getElementById('tipo_armaz-text').textContent;
+        document.getElementById('tipo_armaz-text').outerHTML = `
+            <select id="edit-tipo_armaz" class="form-select">
+                <option value="" disabled selected>Tipo de Armazenamento</option>
+                <option value="NAN" ${tipoArmaz === 'NAN' ? 'selected' : ''}>Sem Armazenamento</option>
+                <option value="HDD" ${tipoArmaz === 'HDD' ? 'selected' : ''}>HDD</option>
+                <option value="SSD" ${tipoArmaz === 'SSD' ? 'selected' : ''}>SSD</option>
+            </select>
+        `;
+
+        const funcionando = document.getElementById('funcionando-text').textContent === 'Sim';
+        document.getElementById('funcionando-text').outerHTML = `
+            <select id="edit-funcionando" class="form-select">
+                <option value="" disabled selected>Funcionando?</option>
+                <option value="true" ${funcionando ? 'selected' : ''}>Sim</option>
+                <option value="false" ${!funcionando ? 'selected' : ''}>Não</option>
+            </select>
+        `;
+
+        document.getElementById('locat_do_disp-text').outerHTML = `<input type="text" id="edit-locat_do_disp" class="form-input" value="${document.getElementById('locat_do_disp-text').textContent}">`;
+        document.getElementById('descricao-text').outerHTML = `<textarea id="edit-descricao" class="form-input desc">${document.getElementById('descricao-text').textContent}</textarea>`;
+        document.getElementById('data_de_an-text').outerHTML = `<input type="date" id="edit-data_de_an" class="form-input" value="${document.getElementById('data_de_an-text').textContent}">`;
+
+        // Atualizar botões
+        document.querySelector('.card-btns').innerHTML = `
+            <button class="btn-b" onclick="saveChanges(${id_tomb})">Salvar</button>
+            <button class="btn-c" onclick="toggleEditMode(${id_tomb})">Cancelar</button>
+            <button class="btn-b" onclick="showHistory(${id_tomb})">Exibir Histórico</button>
+        `;
+    } else {
+        // Sair do modo de edição
+        document.getElementById('caract').dataset.editMode = 'false';
+        
+        // Recarregar os dados do dispositivo
+        const searchBar = document.getElementById("search-bar");
+        searchBar.value = id_tomb;
+        document.getElementById("search-btn").click();
+    }
 }
 
-function deleteItem(id_tomb) {
-    fetch(`/dispositivos/${id_tomb}`, {
-        method: 'DELETE'
-    })
-    .then(response => {
-        if (response.status === 204) {
-            alert('Item excluído com sucesso!');
-            document.getElementById('search-btn').click(); // Atualiza a busca
-        } else {
-            alert('Erro ao excluir item');
+async function saveChanges(id_tomb) {
+    const updatedData = {};
+    const form = document.getElementById(`edit-form-${id_tomb}`);
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        if (input.value !== input.defaultValue) {
+            updatedData[input.name] = input.value;
         }
-    })
-    .catch(error => console.error('Erro:', error));
-}
+    });
 
-function showHistory(id_tomb) {
-    window.location.href = `/history?id=${id_tomb}`;
+    try {
+        const response = await fetch(`/dispositivos/${id_tomb}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Erro ao salvar alterações');
+        }
+
+        alert('Alterações salvas com sucesso!');
+        toggleEditMode(id_tomb);
+        location.reload(); // Recarrega a página para mostrar os dados atualizados
+    } catch (error) {
+        alert(error.message);
+    }
 }

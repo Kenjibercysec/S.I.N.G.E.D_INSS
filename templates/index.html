@@ -39,9 +39,9 @@
                 <p>Descrição:</p>
                 <p>Data da Análise:</p>
                 <div class="card-btns" name="card-btns">
-                    <button class="btn-b">Editar</button>
-                    <button class="btn-c">Excluir</button>
-                    <button class="btn-b">Exibir Histórico</button>
+                    <button class="btn-b" onclick="editItem(${dispositivo.id_tomb})">Editar</button>
+                    <button class="btn-c" onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
+                    <button class="btn-b" onclick="showHistory(${dispositivo.id_tomb})">Exibir Histórico</button>
                 </div>
             </div>
         </div>
@@ -77,18 +77,18 @@
                     `;
 
                     document.getElementById("caract").innerHTML = `
-                        <p>Marca: ${dispositivo.marca || "N/A"}</p>
-                        <p>Quantidade de Memória RAM: ${dispositivo.qnt_mem || "N/A"}</p>
-                        <p>Quantidade de Armazenamento: ${dispositivo.qnt_armaz || "N/A"}</p>
-                        <p>Tipo de Armazenamento: ${dispositivo.tipo_armaz || "N/A"}</p>
-                        <p>Funcionando: ${dispositivo.funcionando ? "Sim" : "Não"}</p>
-                        <p>Local Atual do Dispositivo: ${dispositivo.locat_do_disp || "N/A"}</p>
-                        <p>Descrição: ${dispositivo.descricao || "N/A"}</p>
-                        <p>Data da Análise: ${dispositivo.data_de_an || "N/A"}</p>
+                        <p>Marca: <span id="marca-text">${dispositivo.marca || "N/A"}</span></p>
+                        <p>Quantidade de Memória RAM: <span id="qnt_ram-text">${dispositivo.qnt_ram || "N/A"}</span></p>
+                        <p>Quantidade de Armazenamento: <span id="qnt_armaz-text">${dispositivo.qnt_armaz || "N/A"}</span></p>
+                        <p>Tipo de Armazenamento: <span id="tipo_armaz-text">${dispositivo.tipo_armaz || "N/A"}</span></p>
+                        <p>Funcionando: <span id="funcionando-text">${dispositivo.funcionando ? "Sim" : "Não"}</span></p>
+                        <p>Local Atual do Dispositivo: <span id="locat_do_disp-text">${dispositivo.locat_do_disp || "N/A"}</span></p>
+                        <p>Descrição: <span id="descricao-text">${dispositivo.descricao || "N/A"}</span></p>
+                        <p>Data da Análise: <span id="data_de_an-text">${dispositivo.data_de_an || "N/A"}</span></p>
                         <div class="card-btns" name="card-btns">
-                            <button class="btn-b">Editar</button>
-                            <button class="btn-c">Excluir</button>
-                            <button class="btn-b">Exibir Histórico</button>
+                            <button class="btn-b" onclick="toggleEditMode(${dispositivo.id_tomb})">Editar</button>
+                            <button class="btn-c" onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
+                            <button class="btn-b" onclick="showHistory(${dispositivo.id_tomb})">Exibir Histórico</button>
                         </div>
                     `;
                 } catch (error) {

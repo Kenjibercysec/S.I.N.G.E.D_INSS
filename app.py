@@ -5,8 +5,8 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db, init_db
-from models import Usuario, Dispositivo as DispositivoModel
-from schemas import DispositivoOut, DispositivoCreate  # Corrigir a importação
+from models import Usuario, Dispositivo as DispositivoModel, LogAtualizacao
+from schemas import DispositivoOut, DispositivoCreate, DispositivoUpdate  # Corrigir a importação
 import logging
 from pydantic import BaseModel
 from typing import Optional
@@ -69,25 +69,21 @@ def get_usuarios(db: Session = Depends(get_db)):
 class DispositivoCreateForm(BaseModel):
     id_tomb: int
     tipo_de_disp: str
-    qnt_armaz: str
-    tipo_armaz: str
+    qnt_ram: Optional[int] = None
+    qnt_armaz: Optional[int] = None
+    tipo_armaz: Optional[str] = None
     marca: str
-    funcionando: bool
-    data_de_an: date
-    locat_do_disp: str
+    modelo: str
+    funcionando: Optional[bool] = None
+    data_de_an: Optional[date] = None
+    locat_do_disp: Optional[str] = None
     descricao: Optional[str] = None
 
-##@app.post("/dispositivo/", response_model=Dispositivo)
-##def create_dispositivo(
-##    dispositivo: DispositivoCreate = Body(...),  # Receber os dados no corpo da requisição como JSON
-##    db: Session = Depends(get_db)
-##):
-@app.post("/dispositivos/{id_tomb}", response_model=DispositivoOut)
-def create_dispositivo_by_id_tomb(
-    id_tomb: int,
-    dispositivo: DispositivoCreate = Body(...),
+@app.post("/dispositivos/", response_model=DispositivoOut)
+def create_dispositivo(
+    dispositivo: DispositivoCreateForm = Body(...),
     db: Session = Depends(get_db)
-    ):
+):
     logger.info(f"Received POST request to /dispositivos/ with data: {dispositivo.dict()}")
     db_dispositivo = DispositivoModel(**dispositivo.dict())
     try:
@@ -127,16 +123,110 @@ def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
 @app.get("/dispositivos/search/{query}")
 def search_dispositivos(query: str, db: Session = Depends(get_db)):
     logger.info(f"Searching dispositivos with query: {query}")
-    dispositivos = db.query(DispositivoModel).filter(
-        DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
-        DispositivoModel.marca.ilike(f"%{query}%") |
-        DispositivoModel.locat_do_disp.ilike(f"%{query}%")
-    ).all()
-    if not dispositivos:
-        logger.warning(f"No dispositivos found for query: {query}")
-        raise HTTPException(status_code=404, detail="No dispositivos found")
-    logger.info(f"Found dispositivos: {dispositivos}")
-    return dispositivos
+    try:
+        # Try to convert query to integer for id_tomb search
+        id_tomb = None
+        try:
+            id_tomb = int(query)
+        except ValueError:
+            pass
+
+        dispositivos = db.query(DispositivoModel).filter(
+            (DispositivoModel.id_tomb == id_tomb) if id_tomb is not None else False |
+            DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
+            DispositivoModel.marca.ilike(f"%{query}%") |
+            DispositivoModel.modelo.ilike(f"%{query}%") |
+            DispositivoModel.locat_do_disp.ilike(f"%{query}%") |
+            DispositivoModel.descricao.ilike(f"%{query}%")
+        ).all()
+
+        if not dispositivos:
+            logger.warning(f"No dispositivos found for query: {query}")
+            return {"message": "No dispositivos found", "results": []}
+        
+        logger.info(f"Found {len(dispositivos)} dispositivos")
+        return {
+            "message": "Dispositivos found successfully",
+            "results": [{
+                "id_tomb": d.id_tomb,
+                "tipo_de_disp": d.tipo_de_disp,
+                "marca": d.marca,
+                "modelo": d.modelo,
+                "locat_do_disp": d.locat_do_disp,
+                "funcionando": d.funcionando
+            } for d in dispositivos]
+        }
+    except Exception as e:
+        logger.error(f"Error searching dispositivos: {e}")
+        raise HTTPException(status_code=500, detail="Error searching dispositivos")
+
+@app.get("/dispositivos/", response_model=list[DispositivoOut])
+def list_dispositivos(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    logger.info(f"Listing dispositivos with skip={skip}, limit={limit}")
+    try:
+        dispositivos = db.query(DispositivoModel).offset(skip).limit(limit).all()
+        return dispositivos
+    except Exception as e:
+        logger.error(f"Error listing dispositivos: {e}")
+        raise HTTPException(status_code=500, detail="Error listing dispositivos")
+
+@app.get("/dispositivos/{id_tomb}/history")
+def get_dispositivo_history(id_tomb: int, db: Session = Depends(get_db)):
+    logger.info(f"Getting history for dispositivo with id_tomb: {id_tomb}")
+    try:
+        history = db.query(LogAtualizacao).filter(LogAtualizacao.id_tomb == id_tomb).all()
+        if not history:
+            return {"message": "No history found", "results": []}
+        return {
+            "message": "History retrieved successfully",
+            "results": [{
+                "id_log": h.id_log,
+                "id_tomb": h.id_tomb,
+                "campo_alterado": h.campo_alterado,
+                "valor_antigo": h.valor_antigo,
+                "valor_novo": h.valor_novo,
+                "data_hora_alteracao": h.data_hora_alteracao
+            } for h in history]
+        }
+    except Exception as e:
+        logger.error(f"Error getting history: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving history")
+
+@app.put("/dispositivos/{id_tomb}", response_model=DispositivoOut)
+def update_dispositivo(
+    id_tomb: int,
+    dispositivo: DispositivoCreateForm = Body(...),
+    db: Session = Depends(get_db)
+):
+    logger.info(f"Updating dispositivo with id_tomb: {id_tomb}")
+    try:
+        db_dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
+        if not db_dispositivo:
+            raise HTTPException(status_code=404, detail="Dispositivo not found")
+
+        # Log changes before updating
+        for field, value in dispositivo.dict().items():
+            if field != "id_tomb" and getattr(db_dispositivo, field) != value:
+                log = LogAtualizacao(
+                    id_tomb=id_tomb,
+                    campo_alterado=field,
+                    valor_antigo=str(getattr(db_dispositivo, field)),
+                    valor_novo=str(value)
+                )
+                db.add(log)
+                setattr(db_dispositivo, field, value)
+
+        db.commit()
+        db.refresh(db_dispositivo)
+        return db_dispositivo
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating dispositivo: {e}")
+        raise HTTPException(status_code=500, detail="Error updating dispositivo")
 
 if __name__ == "__main__":
     import uvicorn

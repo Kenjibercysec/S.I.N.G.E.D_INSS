@@ -1,21 +1,24 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import date
 
 class DispositivoBase(BaseModel):
-    tipo_de_disp: str
-    qnt_ram: Optional[int]
-    qnt_armaz: Optional[int]
-    tipo_armaz: Optional[str]
-    marca: str
-    modelo: str
-    funcionando: Optional[bool]
-    data_de_an: Optional[date]
-    locat_do_disp: Optional[str]
-    descricao: Optional[str]
+    tipo_de_disp: Optional[str] = None
+    qnt_ram: Optional[int] = None
+    qnt_armaz: Optional[int] = None
+    tipo_armaz: Optional[str] = None
+    marca: Optional[str] = None
+    modelo: Optional[str] = None
+    funcionando: Optional[bool] = None
+    data_de_an: Optional[date] = None
+    locat_do_disp: Optional[str] = None
+    descricao: Optional[str] = None
 
 class DispositivoCreate(DispositivoBase):
-    pass
+    id_tomb: int
+    tipo_de_disp: str
+    marca: str
+    modelo: str
 
 class DispositivoUpdate(DispositivoBase):
     pass
@@ -23,8 +26,7 @@ class DispositivoUpdate(DispositivoBase):
 class DispositivoOut(DispositivoBase):
     id_tomb: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LogAtualizacaoOut(BaseModel):
     id_log: int
@@ -34,6 +36,4 @@ class LogAtualizacaoOut(BaseModel):
     valor_novo: Optional[str]
     data_hora_alteracao: date
 
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
