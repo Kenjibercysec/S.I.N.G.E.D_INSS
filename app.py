@@ -11,6 +11,7 @@ import logging
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
+from sqlalchemy.types import String
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -124,20 +125,8 @@ def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
 def search_dispositivos(query: str, db: Session = Depends(get_db)):
     logger.info(f"Searching dispositivos with query: {query}")
     try:
-        # Try to convert query to integer for id_tomb search
-        id_tomb = None
-        try:
-            id_tomb = int(query)
-        except ValueError:
-            pass
-
         dispositivos = db.query(DispositivoModel).filter(
-            (DispositivoModel.id_tomb == id_tomb) if id_tomb is not None else False |
-            DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
-            DispositivoModel.marca.ilike(f"%{query}%") |
-            DispositivoModel.modelo.ilike(f"%{query}%") |
-            DispositivoModel.locat_do_disp.ilike(f"%{query}%") |
-            DispositivoModel.descricao.ilike(f"%{query}%")
+            DispositivoModel.id_tomb.cast(String).startswith(query)
         ).all()
 
         if not dispositivos:
@@ -158,7 +147,31 @@ def search_dispositivos(query: str, db: Session = Depends(get_db)):
         }
     except Exception as e:
         logger.error(f"Error searching dispositivos: {e}")
-        raise HTTPException(status_code=500, detail="Error searching dispositivos")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/dispositivos/autocomplete/{query}")
+def autocomplete_dispositivos(query: str, db: Session = Depends(get_db)):
+    logger.info(f"Autocompleting dispositivos with query: {query}")
+    try:
+        # Busca parcial para todos os campos relevantes
+        dispositivos = db.query(DispositivoModel).filter(
+            DispositivoModel.id_tomb.cast(String).ilike(f"%{query}%") |
+            DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
+            DispositivoModel.marca.ilike(f"%{query}%") |
+            DispositivoModel.modelo.ilike(f"%{query}%")
+        ).limit(10).all()
+
+        return {
+            "results": [{
+                "id_tomb": d.id_tomb,
+                "tipo_de_disp": d.tipo_de_disp,
+                "marca": d.marca,
+                "modelo": d.modelo
+            } for d in dispositivos]
+        }
+    except Exception as e:
+        logger.error(f"Error in autocomplete: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/dispositivos/", response_model=list[DispositivoOut])
 def list_dispositivos(

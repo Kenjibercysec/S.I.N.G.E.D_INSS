@@ -344,3 +344,50 @@ background-color:  #f63b3b;
 .card-btns button:hover {
     opacity: 0.9;
 }
+
+.autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-bottom: none;
+    border-top: none;
+    z-index: 99;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.autocomplete-items div {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #d4d4d4;
+}
+.autocomplete-items div:hover {
+    background-color: #e9e9e9;
+}
+.search-container {
+    position: relative;
+    width: 100%;
+}
+.device-card {
+    background-color: #f0f4f8;
+    border: 1px solid #d4d4d4;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.device-card:hover {
+    background-color: #e9ecef;
+}
+.device-details {
+    display: none;
+    margin-top: 10px;
+}
+.card-btns {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}

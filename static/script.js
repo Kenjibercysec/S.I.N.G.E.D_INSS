@@ -59,13 +59,54 @@ document.getElementById('deviceForm').addEventListener('submit', (e) => {
     window.location.href = `cadpc.html?deviceType=${deviceType}`;
 });
 
-async function carregarEquipamentos() {
-    const response = await fetch('http://localhost:8000/items/');
-    const equipamentos = await response.json();
-
-    const tabela = document.getElementById('equipamentosTable');
-    // Atualizar a tabela com os dados recebidos
+async function loadDevices() {
+    try {
+        const response = await fetch(`/dispositivos/`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar dispositivos');
+        }
+        const data = await response.json();
+        displayDevices(data);
+    } catch (error) {
+        console.error("Erro ao carregar dispositivos:", error);
+    }
 }
+
+function displayDevices(devices) {
+    const infoBox = document.getElementById("info-box");
+    infoBox.innerHTML = '';
+    devices.forEach(device => {
+        const deviceCard = document.createElement("div");
+        deviceCard.classList.add("device-card");
+        deviceCard.innerHTML = `
+            <p><strong>Tipo de dispositivo:</strong> ${device.tipo_de_disp || "N/A"}</p>
+            <p><strong>Nº de tombamento:</strong> ${device.id_tomb || "N/A"}</p>
+            <div class="device-details">
+                <p>Marca: ${device.marca || "N/A"}</p>
+                <p>Quantidade de Memória RAM: ${device.qnt_ram || "N/A"}</p>
+                <p>Quantidade de Armazenamento: ${device.qnt_armaz || "N/A"}</p>
+                <p>Tipo de Armazenamento: ${device.tipo_armaz || "N/A"}</p>
+                <p>Funcionando: ${device.funcionando ? "Sim" : "Não"}</p>
+                <p>Local Atual do Dispositivo: ${device.locat_do_disp || "N/A"}</p>
+                <p>Descrição: ${device.descricao || "N/A"}</p>
+                <p>Data da Análise: ${device.data_de_an || "N/A"}</p>
+                <div class="card-btns">
+                    <button class="btn-b" onclick="editItem(${device.id_tomb})">Editar</button>
+                    <button class="btn-c" onclick="deleteItem(${device.id_tomb})">Excluir</button>
+                    <button class="btn-b" onclick="showHistory(${device.id_tomb})">Exibir Histórico</button>
+                </div>
+            </div>
+        `;
+        deviceCard.addEventListener('click', function() {
+            const details = this.querySelector('.device-details');
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        });
+        infoBox.appendChild(deviceCard);
+    });
+}
+
+// Carregar todos os dispositivos na inicialização
+loadDevices();
 
 // Função de busca
 document.getElementById('search-btn').addEventListener('click', async function() {
