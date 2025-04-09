@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db, init_db
-from models import Usuario, Dispositivo as DispositivoModel, LogAtualizacao
+from models import Usuario, Dispositivo as DispositivoModel, LogAtualizacao, OutroDispositivo
 from schemas import DispositivoOut, DispositivoCreate, DispositivoUpdate  # Corrigir a importação
 import logging
 from pydantic import BaseModel
@@ -125,9 +125,15 @@ def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
 def search_dispositivos(query: str, db: Session = Depends(get_db)):
     logger.info(f"Searching dispositivos with query: {query}")
     try:
-        dispositivos = db.query(DispositivoModel).filter(
+        dispositivos_pc = db.query(DispositivoModel).filter(
             DispositivoModel.id_tomb.cast(String).startswith(query)
         ).all()
+
+        outros_dispositivos = db.query(OutroDispositivo).filter(
+            OutroDispositivo.id_tomb.cast(String).startswith(query)
+        ).all()
+
+        dispositivos = dispositivos_pc + outros_dispositivos
 
         if not dispositivos:
             logger.warning(f"No dispositivos found for query: {query}")
@@ -181,8 +187,17 @@ def list_dispositivos(
 ):
     logger.info(f"Listing dispositivos with skip={skip}, limit={limit}")
     try:
-        dispositivos = db.query(DispositivoModel).offset(skip).limit(limit).all()
-        return dispositivos
+        # Buscar dispositivos de ambas as tabelas
+        dispositivos_pc = db.query(DispositivoModel).order_by(DispositivoModel.id_tomb.desc()).all()
+        outros_dispositivos = db.query(OutroDispositivo).order_by(OutroDispositivo.id_tomb.desc()).all()
+
+        # Combinar os resultados
+        todos_dispositivos = dispositivos_pc + outros_dispositivos
+        
+        # Ordenar por id_tomb
+        todos_dispositivos.sort(key=lambda x: x.id_tomb, reverse=True)
+        
+        return todos_dispositivos[skip:skip+limit]
     except Exception as e:
         logger.error(f"Error listing dispositivos: {e}")
         raise HTTPException(status_code=500, detail="Error listing dispositivos")
@@ -240,6 +255,23 @@ def update_dispositivo(
         db.rollback()
         logger.error(f"Error updating dispositivo: {e}")
         raise HTTPException(status_code=500, detail="Error updating dispositivo")
+
+@app.post("/outros_dispositivos/")
+def create_outro_dispositivo(dispositivo: DispositivoCreateForm, db: Session = Depends(get_db)):
+    logger.info(f"Received POST request to /outros_dispositivos/ with data: {dispositivo.dict()}")
+    db_dispositivo = OutroDispositivo(**dispositivo.dict())
+    try:
+        db.add(db_dispositivo)
+        db.commit()
+        db.refresh(db_dispositivo)
+        logger.info(f"Outro dispositivo created successfully: {db_dispositivo}")
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"IntegrityError: {e}")
+        raise HTTPException(status_code=400, detail="Dispositivo with this ID already exists")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
     import uvicorn

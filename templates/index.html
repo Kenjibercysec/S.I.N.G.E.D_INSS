@@ -90,25 +90,39 @@
                 devices.forEach(device => {
                     const deviceCard = document.createElement("div");
                     deviceCard.classList.add("device-card");
-                    deviceCard.innerHTML = `
+                    
+                    // Campos comuns para todos os dispositivos
+                    let cardContent = `
                         <p><strong>Tipo de dispositivo:</strong> ${device.tipo_de_disp || "N/A"}</p>
                         <p><strong>Nº de tombamento:</strong> ${device.id_tomb || "N/A"}</p>
                         <div class="device-details">
                             <p>Marca: ${device.marca || "N/A"}</p>
-                            <p>Quantidade de Memória RAM: ${device.qnt_ram || "N/A"}</p>
-                            <p>Quantidade de Armazenamento: ${device.qnt_armaz || "N/A"}</p>
-                            <p>Tipo de Armazenamento: ${device.tipo_armaz || "N/A"}</p>
                             <p>Funcionando: ${device.funcionando ? "Sim" : "Não"}</p>
                             <p>Local Atual do Dispositivo: ${device.locat_do_disp || "N/A"}</p>
                             <p>Descrição: ${device.descricao || "N/A"}</p>
-                            <p>Data da Análise: ${device.data_de_an || "N/A"}</p>
+                            <p>Data da Análise: ${device.data_de_an || "N/A"}</p>`;
+
+                    // Adiciona campos específicos para computadores
+                    if (device.tipo_de_disp.toLowerCase() === 'computador') {
+                        cardContent += `
+                            <p>Quantidade de Memória RAM: ${device.qnt_ram || "N/A"} GB</p>
+                            <p>Quantidade de Armazenamento: ${device.qnt_armaz || "N/A"} GB</p>
+                            <p>Tipo de Armazenamento: ${device.tipo_armaz || "N/A"}</p>`;
+                    } else {
+                        // Adiciona campo modelo apenas para outros dispositivos
+                        cardContent += `
+                            <p>Modelo: ${device.modelo || "N/A"}</p>`;
+                    }
+
+                    cardContent += `
                             <div class="card-btns">
                                 <button class="btn-b" onclick="editItem(${device.id_tomb})">Editar</button>
                                 <button class="btn-c" onclick="deleteItem(${device.id_tomb})">Excluir</button>
                                 <button class="btn-b" onclick="showHistory(${device.id_tomb})">Exibir Histórico</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
+
+                    deviceCard.innerHTML = cardContent;
                     deviceCard.addEventListener('click', function() {
                         const details = this.querySelector('.device-details');
                         details.style.display = details.style.display === 'none' ? 'block' : 'none';
