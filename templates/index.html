@@ -6,7 +6,6 @@
     <title>SINGED INSS - Página Inicial</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="/static/style.css">
-
 </head>
 <body>
     <div class="container">
@@ -16,12 +15,16 @@
         
         <div class="top-btns">
             <a class="as" href="/"><button type="button" style="opacity: 90%;" class="button">Consulta</button></a>
+            <h2 style="color: #0047a5;">SINGED INSS</h2>
             <a class="as" href="/selecao"><button type="button" style="opacity: 70%;" class="button">Cadastro</button></a>
         </div>
 
-        <div class="search-bar">
-            <input type="text" placeholder="Pesquisar" class="search-input" id="search-bar">
-            <button class="filter-button" id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <div class="search-container">
+            <div class="search-bar">
+                <input type="text" placeholder="Pesquisar" class="search-input" id="search-bar">
+                <button class="filter-button" id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+            <div id="autocomplete-list" class="autocomplete-items"></div>
         </div>
         
         <div class="info-box" id="info-box">
@@ -39,9 +42,9 @@
                 <p>Descrição:</p>
                 <p>Data da Análise:</p>
                 <div class="card-btns" name="card-btns">
-                    <button class="btn-b" onclick="editItem(${dispositivo.id_tomb})">Editar</button>
-                    <button class="btn-c" onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
-                    <button class="btn-b" onclick="showHistory(${dispositivo.id_tomb})">Exibir Histórico</button>
+                    <button class="btn-b" onclick="editItem()">Editar</button>
+                    <button class="btn-c" onclick="deleteItem()">Excluir</button>
+                    <button class="btn-b" onclick="showHistory()">Exibir Histórico</button>
                 </div>
             </div>
         </div>
@@ -49,53 +52,28 @@
         <script src="../static/inss.js"></script>
         <script src="../static/script.js"></script>
         <script>
-            document.getElementById("search-btn").addEventListener("click", async () => {
-                const searchBar = document.getElementById("search-bar");
-                const query = searchBar.value.trim();
-                if (!query) {
-                    alert("Por favor, insira um ID para pesquisar.");
-                    return;
-                }
+            const searchBar = document.getElementById("search-bar");
 
-                try {
-                    const response = await fetch(`/dispositivos/${query}`);
-                    if (!response.ok) {
-                        if (response.status === 404) {
-                            alert("Dispositivo não encontrado.");
-                        } else {
-                            alert("Erro ao buscar dispositivo.");
-                        }
-                        return;
-                    }
-
-                    const dispositivo = await response.json();
-
-                    // Populate the dropdown with the fetched data
-                    document.getElementById("btn-info-box").innerHTML = `
-                        <p><strong>Tipo de dispositivo:</strong> ${dispositivo.tipo_de_disp || "N/A"}</p>
-                        <p><strong>Nº de tombamento:</strong> ${dispositivo.id_tomb || "N/A"}</p>
-                    `;
-
-                    document.getElementById("caract").innerHTML = `
-                        <p>Marca: <span id="marca-text">${dispositivo.marca || "N/A"}</span></p>
-                        <p>Quantidade de Memória RAM: <span id="qnt_ram-text">${dispositivo.qnt_ram || "N/A"}</span></p>
-                        <p>Quantidade de Armazenamento: <span id="qnt_armaz-text">${dispositivo.qnt_armaz || "N/A"}</span></p>
-                        <p>Tipo de Armazenamento: <span id="tipo_armaz-text">${dispositivo.tipo_armaz || "N/A"}</span></p>
-                        <p>Funcionando: <span id="funcionando-text">${dispositivo.funcionando ? "Sim" : "Não"}</span></p>
-                        <p>Local Atual do Dispositivo: <span id="locat_do_disp-text">${dispositivo.locat_do_disp || "N/A"}</span></p>
-                        <p>Descrição: <span id="descricao-text">${dispositivo.descricao || "N/A"}</span></p>
-                        <p>Data da Análise: <span id="data_de_an-text">${dispositivo.data_de_an || "N/A"}</span></p>
-                        <div class="card-btns" name="card-btns">
-                            <button class="btn-b" onclick="toggleEditMode(${dispositivo.id_tomb})">Editar</button>
-                            <button class="btn-c" onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
-                            <button class="btn-b" onclick="showHistory(${dispositivo.id_tomb})">Exibir Histórico</button>
-                        </div>
-                    `;
-                } catch (error) {
-                    console.error("Erro ao buscar dispositivo:", error);
-                    alert("Erro ao buscar dispositivo.");
-                }
+            searchBar.addEventListener("input", function() {
+                const query = this.value.trim();
+                updateDeviceList(query);
             });
+
+            async function updateDeviceList(query = '') {
+                try {
+                    const response = await fetch(`/dispositivos/search/${query}`);
+                    if (!response.ok) {
+                        throw new Error('Erro na busca');
+                    }
+                    const data = await response.json();
+                    displayDevices(data.results);
+                } catch (error) {
+                    console.error("Erro ao buscar dispositivos:", error);
+                }
+            }
+
+            // Carregar todos os dispositivos na inicialização
+            loadDevices();
         </script>
     </body>
 </html>

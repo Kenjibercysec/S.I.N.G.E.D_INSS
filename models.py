@@ -31,3 +31,19 @@ class LogAtualizacao(Base):
     valor_antigo = Column(Text)
     valor_novo = Column(Text)
     data_hora_alteracao = Column(TIMESTAMP, server_default=func.now())
+
+class OutroDispositivo(Base):
+    __tablename__ = 'outros_dispositivos'
+
+    id = Column(Integer, primary_key=True, index=True)
+    id_tomb = Column(Integer, unique=True, index=True)
+    tipo_de_disp = Column(String, index=True)
+    qnt_ram = Column(Integer)
+    qnt_armaz = Column(Integer)
+    tipo_armaz = Column(String)
+    marca = Column(String)
+    modelo = Column(String)
+    funcionando = Column(Boolean)
+    data_de_an = Column(Date)
+    locat_do_disp = Column(String)
+    descricao = Column(String)

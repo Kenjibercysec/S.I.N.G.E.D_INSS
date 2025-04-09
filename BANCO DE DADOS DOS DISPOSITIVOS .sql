@@ -1,2 +1,0 @@
-﻿INSERT INTO dispositivos (id_tomb, tipo_de_disp, qnt_armaz, tipo_armaz, marca, modelo, funcionando, data_de_an, locat_do_disp, descricao) VALUES 
-('12345', 'Notebook', 500, 'SSD', 'Dell', 'Latitude E7470', 1, '2023-01-15', 'Office A', 'Good condition');

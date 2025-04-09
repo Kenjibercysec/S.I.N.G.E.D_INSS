@@ -14,24 +14,23 @@
 
         <div class="top-btns">
             <a class="as" href="/"><button type="button" style="opacity: 70%;" class="button"> Consulta </button></a>
+            <h2 style="color: #0047a5;">Cadastro de Dispositivos</h2>
             <a class="as" href="/selecao"><button type="button" style=" opacity: 90%;" class="button">Cadastro</button></a>
+        </div>
 
-         </div>
-
-         <h1>Cadastro de Dispositivos</h1>
         <form class="form-section" id="cad-form" name="cad-form">
             <div class="form-group">
-                <input type="text" placeholder="Nº de tombamento" class="form-input">
+                <input type="text" placeholder="Nº de tombamento" class="form-input" required>
+                
                 <select id="tipo_de_disp" name="tipo_de_disp" class="form-select" required>
                     <option value="" disabled selected>Tipo de Dispositivo</option>
                     <option value="monitor">Monitor</option>
                     <option value="impressora">Impressora</option>
-                    <option value="switch">Switch</option></a>
+                    <option value="switch">Switch</option>
                     <option value="scanner">Scanner</option>
                     <option value="teclado">Teclado</option>
                     <option value="outros">Outros</option>
                 </select>
-                
 
                 <select id="marca" name="marca" class="form-select" required>
                     <option value="" disabled selected>Marca</option>
@@ -44,12 +43,13 @@
                     <option value="fujitsu">Fujitsu</option>
                     <option value="kodak">Kodak</option>
                     <option value="lg">LG</option>
-                    <option value="Lenovo">Lenovo</option>
+                    <option value="lenovo">Lenovo</option>
                     <option value="positivo">Positivo</option>
                     <option value="samsung">Samsung</option>
                     <option value="3com">3Com</option>
                     <option value="outros">Outros</option>
                 </select>
+
                 <input type="text" id="modelo" name="modelo" placeholder="Modelo do dispositivo" class="form-input" required>
 
                 <select id="funcionando" name="funcionando" class="form-select" required>
@@ -57,18 +57,58 @@
                     <option value="true">Sim</option>
                     <option value="false">Não</option>
                 </select>
-                <input type="text" placeholder="Local atual do Dispositivo" class="form-input">
+
+                <input type="text" placeholder="Local atual do Dispositivo" class="form-input" required>
                 <input type="text" placeholder="Descrição" class="form-input desc">
+                
                 <div class="date_div">
                     <p>Data da Análise:</p>
                     <input type="date" id="data_de_an" name="data_de_an" class="form-input" required>
                 </div>
-                <button type="submit" class="button">Selecionar</button>
-            </div>
-            <div class="form-group">
+
+                <button type="submit" class="button">Cadastrar</button>
             </div>
         </form>
     </div>
+
+    <script>
+        document.getElementById('cad-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                id_tomb: parseInt(document.querySelector('input[placeholder="Nº de tombamento"]').value),
+                tipo_de_disp: document.getElementById('tipo_de_disp').value,
+                marca: document.getElementById('marca').value,
+                modelo: document.getElementById('modelo').value,
+                funcionando: document.getElementById('funcionando').value === 'true',
+                locat_do_disp: document.querySelector('input[placeholder="Local atual do Dispositivo"]').value,
+                descricao: document.querySelector('input[placeholder="Descrição"]').value || 'N/A',
+                data_de_an: document.getElementById('data_de_an').value,
+                qnt_ram: null,
+                qnt_armaz: null,
+                tipo_armaz: 'N/A'
+            };
+
+            try {
+                const response = await fetch('/outros_dispositivos/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData),
+                });
+
+                if (response.ok) {
+                    alert('Dispositivo cadastrado com sucesso!');
+                    window.location.href = '/';
+                } else {
+                    const errorData = await response.json();
+                    alert(`Erro ao cadastrar dispositivo: ${errorData.detail}`);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao cadastrar dispositivo. Por favor, tente novamente.');
+            }
+        });
+    </script>
 </body>
 </html>
 

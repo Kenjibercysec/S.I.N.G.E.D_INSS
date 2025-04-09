@@ -59,13 +59,89 @@ document.getElementById('deviceForm').addEventListener('submit', (e) => {
     window.location.href = `cadpc.html?deviceType=${deviceType}`;
 });
 
-async function carregarEquipamentos() {
-    const response = await fetch('http://localhost:8000/items/');
-    const equipamentos = await response.json();
-
-    const tabela = document.getElementById('equipamentosTable');
-    // Atualizar a tabela com os dados recebidos
+async function loadDevices() {
+    try {
+        const response = await fetch(`/dispositivos/`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar dispositivos');
+        }
+        const data = await response.json();
+        displayDevices(data);
+    } catch (error) {
+        console.error("Erro ao carregar dispositivos:", error);
+    }
 }
+
+function displayDevices(devices) {
+    console.log("Iniciando exibição de dispositivos:", devices);
+    const infoBox = document.getElementById("info-box");
+    if (!infoBox) {
+        console.error("Elemento info-box não encontrado");
+        return;
+    }
+    
+    // Limpar conteúdo atual
+    infoBox.innerHTML = '';
+    
+    if (!devices || !Array.isArray(devices) || devices.length === 0) {
+        console.log("Nenhum dispositivo para exibir");
+        infoBox.innerHTML = '<p>Nenhum dispositivo encontrado</p>';
+        return;
+    }
+    
+    devices.forEach(device => {
+        console.log("Processando dispositivo:", device);
+        
+        // Clonar a estrutura HTML existente
+        const template = `
+           
+            <div class="info-box">
+                <div class="info-box-internal" id="info-box-internal">
+                        <div type="button" class="btn-info-box">
+                            <p><strong>Tipo de dispositivo:</strong> ${device.tipo_de_disp || "N/A"}</p>   
+                        <p><strong>Nº de tombamento:</strong> ${device.id_tomb || "N/A"}</p>
+                        </div>
+                    <div class="caract">
+                        <p>Marca: ${device.marca || "N/A"}</p>
+                        ${device.tipo_de_disp && device.tipo_de_disp.toLowerCase() === 'computador' ? `
+                            <p>Quantidade de Memória RAM: ${device.qnt_ram || "N/A"} GB</p>
+                            <p>Quantidade de Armazenamento: ${device.qnt_armaz || "N/A"} GB</p>
+                            <p>Tipo de Armazenamento: ${device.tipo_armaz || "N/A"}</p>
+                        ` : `
+                            <p>Modelo: ${device.modelo || "N/A"}</p>
+                        `}
+                        <p>Funcionando: ${device.funcionando ? "Sim" : "Não"}</p>
+                        <p>Local Atual do Dispositivo: ${device.locat_do_disp || "N/A"}</p>
+                        <p>Descrição: ${device.descricao || "N/A"}</p>
+                        <p>Data da Análise: ${device.data_de_an || "N/A"}</p>
+                        <div class="card-btns">
+                            <button class="btn-b" onclick="editItem(${device.id_tomb})">Editar</button>
+                            <button class="btn-c" onclick="deleteItem(${device.id_tomb})">Excluir</button>
+                            <button class="btn-b" onclick="showHistory(${device.id_tomb})">Exibir Histórico</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Adicionar o dispositivo ao container
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = template;
+        const deviceElement = tempDiv.firstElementChild;
+        
+        // Adicionar evento de clique para mostrar/esconder detalhes
+        const btnInfoBox = deviceElement.querySelector('.btn-info-box');
+        const caract = deviceElement.querySelector('.caract');
+        btnInfoBox.addEventListener('click', function() {
+            caract.style.display = caract.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        infoBox.appendChild(deviceElement);
+    });
+}
+
+// Carregar todos os dispositivos na inicialização
+loadDevices();
 
 // Função de busca
 document.getElementById('search-btn').addEventListener('click', async function() {
@@ -228,8 +304,7 @@ function toggleEditMode(id_tomb) {
                 <option value="Lenovo" ${marca === 'Lenovo' ? 'selected' : ''}>Lenovo</option>
                 <option value="daten" ${marca === 'daten' ? 'selected' : ''}>Daten</option>
                 <option value="dell" ${marca === 'dell' ? 'selected' : ''}>Dell</option>
-                <option value="hp" ${marca === 'hp' ? 'selected' : ''}>HP</option>
-                <option value="acer" ${marca === 'acer' ? 'selected' : ''}>Acer</option>
+                <option value="acer" ${marca === 'outros' ? 'selected' : ''}>Acer</option>
             </select>
         `;
 
@@ -256,6 +331,8 @@ function toggleEditMode(id_tomb) {
                 <option value="120" ${qntArmaz === '120' ? 'selected' : ''}>120 GB</option>
                 <option value="128" ${qntArmaz === '128' ? 'selected' : ''}>128 GB</option>
                 <option value="160" ${qntArmaz === '160' ? 'selected' : ''}>160 GB</option>
+                <option value="240" ${qntArmaz === '240' ? 'selected' : ''}>240 GB</option>
+                <option value="256" ${qntArmaz === '256' ? 'selected' : ''}>256 GB</option>
                 <option value="320" ${qntArmaz === '320' ? 'selected' : ''}>320 GB</option>
                 <option value="500" ${qntArmaz === '500' ? 'selected' : ''}>500 GB</option>
                 <option value="1000" ${qntArmaz === '1000' ? 'selected' : ''}>1 TB</option>

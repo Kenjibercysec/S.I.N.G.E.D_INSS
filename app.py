@@ -5,12 +5,13 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db, init_db
-from models import Usuario, Dispositivo as DispositivoModel, LogAtualizacao
+from models import Usuario, Dispositivo as DispositivoModel, LogAtualizacao, OutroDispositivo
 from schemas import DispositivoOut, DispositivoCreate, DispositivoUpdate  # Corrigir a importação
 import logging
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
+from sqlalchemy.types import String
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -124,41 +125,71 @@ def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
 def search_dispositivos(query: str, db: Session = Depends(get_db)):
     logger.info(f"Searching dispositivos with query: {query}")
     try:
-        # Try to convert query to integer for id_tomb search
-        id_tomb = None
-        try:
-            id_tomb = int(query)
-        except ValueError:
-            pass
-
-        dispositivos = db.query(DispositivoModel).filter(
-            (DispositivoModel.id_tomb == id_tomb) if id_tomb is not None else False |
-            DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
-            DispositivoModel.marca.ilike(f"%{query}%") |
-            DispositivoModel.modelo.ilike(f"%{query}%") |
-            DispositivoModel.locat_do_disp.ilike(f"%{query}%") |
-            DispositivoModel.descricao.ilike(f"%{query}%")
+        dispositivos_pc = db.query(DispositivoModel).filter(
+            DispositivoModel.id_tomb.cast(String).startswith(query)
         ).all()
+
+        outros_dispositivos = db.query(OutroDispositivo).filter(
+            OutroDispositivo.id_tomb.cast(String).startswith(query)
+        ).all()
+
+        dispositivos = dispositivos_pc + outros_dispositivos
 
         if not dispositivos:
             logger.warning(f"No dispositivos found for query: {query}")
             return {"message": "No dispositivos found", "results": []}
         
         logger.info(f"Found {len(dispositivos)} dispositivos")
+        
+        # Converter para dicionário para garantir que todos os campos estejam presentes
+        dispositivos_dict = []
+        for dispositivo in dispositivos:
+            dispositivo_dict = {
+                "id_tomb": dispositivo.id_tomb,
+                "tipo_de_disp": dispositivo.tipo_de_disp,
+                "qnt_ram": dispositivo.qnt_ram,
+                "qnt_armaz": dispositivo.qnt_armaz,
+                "tipo_armaz": dispositivo.tipo_armaz,
+                "marca": dispositivo.marca,
+                "modelo": dispositivo.modelo,
+                "funcionando": dispositivo.funcionando,
+                "data_de_an": dispositivo.data_de_an,
+                "locat_do_disp": dispositivo.locat_do_disp,
+                "descricao": dispositivo.descricao
+            }
+            dispositivos_dict.append(dispositivo_dict)
+        
         return {
             "message": "Dispositivos found successfully",
+            "results": dispositivos_dict
+        }
+    except Exception as e:
+        logger.error(f"Error searching dispositivos: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/dispositivos/autocomplete/{query}")
+def autocomplete_dispositivos(query: str, db: Session = Depends(get_db)):
+    logger.info(f"Autocompleting dispositivos with query: {query}")
+    try:
+        # Busca parcial para todos os campos relevantes
+        dispositivos = db.query(DispositivoModel).filter(
+            DispositivoModel.id_tomb.cast(String).ilike(f"%{query}%") |
+            DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
+            DispositivoModel.marca.ilike(f"%{query}%") |
+            DispositivoModel.modelo.ilike(f"%{query}%")
+        ).limit(10).all()
+
+        return {
             "results": [{
                 "id_tomb": d.id_tomb,
                 "tipo_de_disp": d.tipo_de_disp,
                 "marca": d.marca,
-                "modelo": d.modelo,
-                "locat_do_disp": d.locat_do_disp,
-                "funcionando": d.funcionando
+                "modelo": d.modelo
             } for d in dispositivos]
         }
     except Exception as e:
-        logger.error(f"Error searching dispositivos: {e}")
-        raise HTTPException(status_code=500, detail="Error searching dispositivos")
+        logger.error(f"Error in autocomplete: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/dispositivos/", response_model=list[DispositivoOut])
 def list_dispositivos(
@@ -168,8 +199,35 @@ def list_dispositivos(
 ):
     logger.info(f"Listing dispositivos with skip={skip}, limit={limit}")
     try:
-        dispositivos = db.query(DispositivoModel).offset(skip).limit(limit).all()
-        return dispositivos
+        # Buscar dispositivos de ambas as tabelas
+        dispositivos_pc = db.query(DispositivoModel).order_by(DispositivoModel.id_tomb.desc()).all()
+        outros_dispositivos = db.query(OutroDispositivo).order_by(OutroDispositivo.id_tomb.desc()).all()
+
+        # Combinar os resultados
+        todos_dispositivos = dispositivos_pc + outros_dispositivos
+        
+        # Ordenar por id_tomb
+        todos_dispositivos.sort(key=lambda x: x.id_tomb, reverse=True)
+        
+        # Converter para dicionário para garantir que todos os campos estejam presentes
+        dispositivos_dict = []
+        for dispositivo in todos_dispositivos[skip:skip+limit]:
+            dispositivo_dict = {
+                "id_tomb": dispositivo.id_tomb,
+                "tipo_de_disp": dispositivo.tipo_de_disp,
+                "qnt_ram": dispositivo.qnt_ram,
+                "qnt_armaz": dispositivo.qnt_armaz,
+                "tipo_armaz": dispositivo.tipo_armaz,
+                "marca": dispositivo.marca,
+                "modelo": dispositivo.modelo,
+                "funcionando": dispositivo.funcionando,
+                "data_de_an": dispositivo.data_de_an,
+                "locat_do_disp": dispositivo.locat_do_disp,
+                "descricao": dispositivo.descricao
+            }
+            dispositivos_dict.append(dispositivo_dict)
+        
+        return dispositivos_dict
     except Exception as e:
         logger.error(f"Error listing dispositivos: {e}")
         raise HTTPException(status_code=500, detail="Error listing dispositivos")
@@ -227,6 +285,23 @@ def update_dispositivo(
         db.rollback()
         logger.error(f"Error updating dispositivo: {e}")
         raise HTTPException(status_code=500, detail="Error updating dispositivo")
+
+@app.post("/outros_dispositivos/")
+def create_outro_dispositivo(dispositivo: DispositivoCreateForm, db: Session = Depends(get_db)):
+    logger.info(f"Received POST request to /outros_dispositivos/ with data: {dispositivo.dict()}")
+    db_dispositivo = OutroDispositivo(**dispositivo.dict())
+    try:
+        db.add(db_dispositivo)
+        db.commit()
+        db.refresh(db_dispositivo)
+        logger.info(f"Outro dispositivo created successfully: {db_dispositivo}")
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"IntegrityError: {e}")
+        raise HTTPException(status_code=400, detail="Dispositivo with this ID already exists")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
     import uvicorn
