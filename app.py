@@ -140,16 +140,28 @@ def search_dispositivos(query: str, db: Session = Depends(get_db)):
             return {"message": "No dispositivos found", "results": []}
         
         logger.info(f"Found {len(dispositivos)} dispositivos")
+        
+        # Converter para dicionário para garantir que todos os campos estejam presentes
+        dispositivos_dict = []
+        for dispositivo in dispositivos:
+            dispositivo_dict = {
+                "id_tomb": dispositivo.id_tomb,
+                "tipo_de_disp": dispositivo.tipo_de_disp,
+                "qnt_ram": dispositivo.qnt_ram,
+                "qnt_armaz": dispositivo.qnt_armaz,
+                "tipo_armaz": dispositivo.tipo_armaz,
+                "marca": dispositivo.marca,
+                "modelo": dispositivo.modelo,
+                "funcionando": dispositivo.funcionando,
+                "data_de_an": dispositivo.data_de_an,
+                "locat_do_disp": dispositivo.locat_do_disp,
+                "descricao": dispositivo.descricao
+            }
+            dispositivos_dict.append(dispositivo_dict)
+        
         return {
             "message": "Dispositivos found successfully",
-            "results": [{
-                "id_tomb": d.id_tomb,
-                "tipo_de_disp": d.tipo_de_disp,
-                "marca": d.marca,
-                "modelo": d.modelo,
-                "locat_do_disp": d.locat_do_disp,
-                "funcionando": d.funcionando
-            } for d in dispositivos]
+            "results": dispositivos_dict
         }
     except Exception as e:
         logger.error(f"Error searching dispositivos: {e}")
@@ -197,7 +209,25 @@ def list_dispositivos(
         # Ordenar por id_tomb
         todos_dispositivos.sort(key=lambda x: x.id_tomb, reverse=True)
         
-        return todos_dispositivos[skip:skip+limit]
+        # Converter para dicionário para garantir que todos os campos estejam presentes
+        dispositivos_dict = []
+        for dispositivo in todos_dispositivos[skip:skip+limit]:
+            dispositivo_dict = {
+                "id_tomb": dispositivo.id_tomb,
+                "tipo_de_disp": dispositivo.tipo_de_disp,
+                "qnt_ram": dispositivo.qnt_ram,
+                "qnt_armaz": dispositivo.qnt_armaz,
+                "tipo_armaz": dispositivo.tipo_armaz,
+                "marca": dispositivo.marca,
+                "modelo": dispositivo.modelo,
+                "funcionando": dispositivo.funcionando,
+                "data_de_an": dispositivo.data_de_an,
+                "locat_do_disp": dispositivo.locat_do_disp,
+                "descricao": dispositivo.descricao
+            }
+            dispositivos_dict.append(dispositivo_dict)
+        
+        return dispositivos_dict
     except Exception as e:
         logger.error(f"Error listing dispositivos: {e}")
         raise HTTPException(status_code=500, detail="Error listing dispositivos")
