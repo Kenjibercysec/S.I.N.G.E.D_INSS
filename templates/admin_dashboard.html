@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SINGED INSS - Painel Administrativo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header"> 
+            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
+        </header>
+        
+        <div class="admin-container">
+            <h2 style="color: #0047a5;">Painel Administrativo</h2>
+            
+            <div class="admin-sections">
+                <h2 style="color: #0047a5; margin-top: 2rem;">Gerenciar Opções - Computadores</h2>
+                <div class="admin-section">
+                    <h3>Gerenciar Marcas</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Marcas Atuais:</h4>
+                            <ul id="marcas-list">
+                                {% for marca in marcas %}
+                                <li>
+                                    {{ marca }}
+                                    <button class="btn-delete" onclick="deleteValue('marcas', '{{ marca }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="nova-marca" placeholder="Nova marca">
+                            <button class="button" onclick="addValue('marcas')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Tipos de Dispositivo</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Tipos Atuais:</h4>
+                            <ul id="tipos-list">
+                                {% for tipo in tipos %}
+                                <li>
+                                    {{ tipo }}
+                                    <button class="btn-delete" onclick="deleteValue('tipos_dispositivo', '{{ tipo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-tipo" placeholder="Novo tipo">
+                            <button class="button" onclick="addValue('tipos_dispositivo')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Tipos de Armazenamento</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Tipos Atuais:</h4>
+                            <ul id="armazenamento-list">
+                                {% for tipo in armazenamento %}
+                                <li>
+                                    {{ tipo }}
+                                    <button class="btn-delete" onclick="deleteValue('tipos_armazenamento', '{{ tipo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-armazenamento" placeholder="Novo tipo">
+                            <button class="button" onclick="addValue('tipos_armazenamento')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Quantidades de RAM</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Quantidades Atuais:</h4>
+                            <ul id="ram-list">
+                                {% for qtd in quantidades_ram %}
+                                <li>
+                                    {{ qtd }} GB
+                                    <button class="btn-delete" onclick="deleteValue('quantidades_ram', '{{ qtd }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="number" id="nova-ram" placeholder="Nova quantidade">
+                            <button class="button" onclick="addValue('quantidades_ram')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Quantidades de Armazenamento</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Quantidades Atuais:</h4>
+                            <ul id="armazenamento-qtd-list">
+                                {% for qtd in quantidades_armazenamento %}
+                                <li>
+                                    {{ qtd }} GB
+                                    <button class="btn-delete" onclick="deleteValue('quantidades_armazenamento', '{{ qtd }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="number" id="nova-armazenamento-qtd" placeholder="Nova quantidade">
+                            <button class="button" onclick="addValue('quantidades_armazenamento')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 style="color: #0047a5; margin-top: 2rem;">Gerenciar Opções - Outros Dispositivos</h2>
+                <div class="admin-section">
+                    <h3>Gerenciar Marcas</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Marcas Atuais:</h4>
+                            <ul id="marcas-outros-list">
+                                {% for marca in marcas_outros %}
+                                <li>
+                                    {{ marca }}
+                                    <button class="btn-delete" onclick="deleteValue('marcas_outros', '{{ marca }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="nova-marca-outros" placeholder="Nova marca">
+                            <button class="button" onclick="addValue('marcas_outros')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Tipos de Dispositivo</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Tipos Atuais:</h4>
+                            <ul id="tipos-outros-list">
+                                {% for tipo in tipos_outros %}
+                                <li>
+                                    {{ tipo }}
+                                    <button class="btn-delete" onclick="deleteValue('tipos_outros', '{{ tipo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-tipo-outros" placeholder="Novo tipo">
+                            <button class="button" onclick="addValue('tipos_outros')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <a href="/" class="back-link">Voltar para a página inicial</a>
+            <p>Desenvolvido por <a href="https://github.com/Vitorhugofsousa" target="_blank">Vitor Hugo</a> e 
+                <a href="https://github.com/Kenjibercysec" target="_blank">Silas Kenji</a></p>
+        </footer>
+    </div>
+
+    <script>
+        async function addValue(field) {
+            let inputId;
+            switch (field) {
+                case 'marcas':
+                    inputId = 'nova-marca';
+                    break;
+                case 'tipos_dispositivo':
+                    inputId = 'novo-tipo';
+                    break;
+                case 'tipos_armazenamento':
+                    inputId = 'novo-armazenamento';
+                    break;
+                case 'quantidades_ram':
+                    inputId = 'nova-ram';
+                    break;
+                case 'quantidades_armazenamento':
+                    inputId = 'nova-armazenamento-qtd';
+                    break;
+                case 'marcas_outros':
+                    inputId = 'nova-marca-outros';
+                    break;
+                case 'tipos_outros':
+                    inputId = 'novo-tipo-outros';
+                    break;
+                default:
+                    alert('Tipo de campo inválido');
+                    return;
+            }
+
+            const value = document.getElementById(inputId).value;
+            if (!value) {
+                alert('Por favor, preencha o campo');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/options/${field}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ value: value })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const list = document.getElementById(`${field.split('_').pop()}-list`);
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        ${value}${field.includes('quantidades') ? ' GB' : ''}
+                        <button class="btn-delete" onclick="deleteValue('${field}', '${value}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    list.appendChild(li);
+                    document.getElementById(inputId).value = '';
+                } else {
+                    alert(data.detail || 'Erro ao adicionar valor');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao adicionar valor');
+            }
+        }
+
+        async function deleteValue(field, value) {
+            if (!confirm('Tem certeza que deseja excluir este valor?')) return;
+
+            try {
+                const response = await fetch(`/admin/options/${field}/${encodeURIComponent(value)}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const list = document.getElementById(`${field.split('_').pop()}-list`);
+                    const items = list.getElementsByTagName('li');
+                    for (let item of items) {
+                        if (item.textContent.trim() === value + (field.includes('quantidades') ? ' GB' : '')) {
+                            item.remove();
+                            break;
+                        }
+                    }
+                } else {
+                    alert(data.detail || 'Erro ao excluir valor');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao excluir valor');
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -266,7 +266,17 @@ async function showHistory(id_tomb) {
     }
 }
 
-function toggleEditMode(id_tomb) {
+async function loadOptions() {
+    try {
+        const response = await fetch('/admin/options');
+        return await response.json();
+    } catch (error) {
+        console.error('Erro ao carregar opções:', error);
+        return null;
+    }
+}
+
+async function toggleEditMode(id_tomb) {
     const caract = document.getElementById(`caract-${id_tomb}`);
     const editables = caract.querySelectorAll('.editable');
     const editButton = caract.querySelector('.btn-b');
@@ -276,6 +286,13 @@ function toggleEditMode(id_tomb) {
     editButton.onclick = null; // Clear existing onclick if any
 
     if (editButton.textContent === 'Editar') {
+        // Carregar opções
+        const options = await loadOptions();
+        if (!options) {
+            alert('Erro ao carregar opções. Por favor, tente novamente.');
+            return;
+        }
+
         // Entrar no modo de edição
         editables.forEach(span => {
             const currentValue = span.textContent.trim(); // Trim whitespace
@@ -295,66 +312,52 @@ function toggleEditMode(id_tomb) {
                 // Formatar a data para YYYY-MM-DD se não for 'N/A'
                 if (currentValue && currentValue !== 'N/A') {
                     const parts = currentValue.split('/');
-                     // Assumindo formato DD/MM/YYYY
+                    // Assumindo formato DD/MM/YYYY
                     if (parts.length === 3) {
                         inputElement.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
                     } else {
-                         // Tentar usar o valor atual se não for o formato esperado
-                         inputElement.value = currentValue;
+                        // Tentar usar o valor atual se não for o formato esperado
+                        inputElement.value = currentValue;
                     }
                 } else {
                     inputElement.value = ''; // Campo vazio se for N/A
                 }
             } else if (field === 'marca') {
-                 inputElement = document.createElement('select');
-                 inputElement.innerHTML = `
+                inputElement = document.createElement('select');
+                inputElement.innerHTML = `
                     <option value="">Selecione a marca</option>
-                    <option value="Positivo" ${currentValue.toLowerCase() === 'positivo' ? 'selected' : ''}>Positivo</option>
-                    <option value="Lenovo" ${currentValue.toLowerCase() === 'lenovo' ? 'selected' : ''}>Lenovo</option>
-                    <option value="Daten" ${currentValue.toLowerCase() === 'daten' ? 'selected' : ''}>Daten</option>
-                    <option value="Dell" ${currentValue.toLowerCase() === 'dell' ? 'selected' : ''}>Dell</option>
-                    <option value="Acer" ${currentValue.toLowerCase() === 'acer' ? 'selected' : ''}>Acer</option>
-                    <option value="Outro" ${!['positivo', 'lenovo', 'daten', 'dell', 'acer'].includes(currentValue.toLowerCase()) && currentValue !== 'N/A' ? 'selected' : ''}>Outro</option>
-                 `;
+                    ${options.marcas.map(marca => `
+                        <option value="${marca}" ${currentValue.toLowerCase() === marca.toLowerCase() ? 'selected' : ''}>${marca}</option>
+                    `).join('')}
+                `;
             } else if (field === 'qnt_ram') {
                 inputElement = document.createElement('select');
-                 inputElement.innerHTML = `
+                inputElement.innerHTML = `
                     <option value="">Quantidade de memória RAM</option>
-                    <option value="0" ${currentValue === '0 GB' ? 'selected' : ''}>0</option>
-                    <option value="1" ${currentValue === '1 GB' ? 'selected' : ''}>1</option>
-                    <option value="2" ${currentValue === '2 GB' ? 'selected' : ''}>2</option>
-                    <option value="4" ${currentValue === '4 GB' ? 'selected' : ''}>4</option>
-                    <option value="6" ${currentValue === '6 GB' ? 'selected' : ''}>6</option>
-                    <option value="8" ${currentValue === '8 GB' ? 'selected' : ''}>8</option>
-                    <option value="12" ${currentValue === '12 GB' ? 'selected' : ''}>12</option>
-                    <option value="16" ${currentValue === '16 GB' ? 'selected' : ''}>16</option>
-                 `;
+                    ${options.quantidades_ram.map(qtd => `
+                        <option value="${qtd}" ${currentValue === `${qtd} GB` ? 'selected' : ''}>${qtd}</option>
+                    `).join('')}
+                `;
             } else if (field === 'qnt_armaz') {
                 inputElement = document.createElement('select');
-                 inputElement.innerHTML = `
+                inputElement.innerHTML = `
                     <option value="">Quantidade de Armazenamento</option>
-                    <option value="0" ${currentValue === '0 GB' ? 'selected' : ''}>0</option>
-                    <option value="120" ${currentValue === '120 GB' ? 'selected' : ''}>120</option>
-                    <option value="128" ${currentValue === '128 GB' ? 'selected' : ''}>128</option>
-                    <option value="160" ${currentValue === '160 GB' ? 'selected' : ''}>160</option>
-                    <option value="240" ${currentValue === '240 GB' ? 'selected' : ''}>240</option>
-                    <option value="256" ${currentValue === '256 GB' ? 'selected' : ''}>256</option>
-                    <option value="320" ${currentValue === '320 GB' ? 'selected' : ''}>320</option>
-                    <option value="500" ${currentValue === '500 GB' ? 'selected' : ''}>500</option>
-                    <option value="1000" ${currentValue === '1000 GB' || currentValue === '1 TB' ? 'selected' : ''}>1000</option>
-                 `;
+                    ${options.quantidades_armazenamento.map(qtd => `
+                        <option value="${qtd}" ${currentValue === `${qtd} GB` || (qtd === '1000' && currentValue === '1 TB') ? 'selected' : ''}>${qtd}</option>
+                    `).join('')}
+                `;
             } else if (field === 'tipo_armaz') {
-                 inputElement = document.createElement('select');
-                 inputElement.innerHTML = `
+                inputElement = document.createElement('select');
+                inputElement.innerHTML = `
                     <option value="">Tipo de Armazenamento</option>
-                    <option value="NAN" ${currentValue === 'NAN' ? 'selected' : ''}>NAN</option>
-                    <option value="HDD" ${currentValue === 'HDD' ? 'selected' : ''}>HDD</option>
-                    <option value="SSD" ${currentValue === 'SSD' ? 'selected' : ''}>SSD</option>
-                 `;
+                    ${options.tipos_armazenamento.map(tipo => `
+                        <option value="${tipo}" ${currentValue === tipo ? 'selected' : ''}>${tipo}</option>
+                    `).join('')}
+                `;
             } else if (field === 'descricao') {
                 inputElement = document.createElement('textarea');
                 inputElement.value = currentValue;
-                inputElement.className = 'form-input desc'; // Apply description class if needed
+                inputElement.className = 'form-input desc';
             } else {
                 // Default for other fields (like modelo, locat_do_disp)
                 inputElement = document.createElement('input');
@@ -364,63 +367,41 @@ function toggleEditMode(id_tomb) {
 
             // Copy dataset for saveChanges
             inputElement.dataset.field = field;
-            inputElement.className += ' form-input'; // Add a common class for styling
+            inputElement.className += ' form-input';
             span.replaceWith(inputElement);
         });
 
         editButton.textContent = 'Salvar';
-        editButton.dataset.id = id_tomb; // Store id_tomb in the button
-        editButton.addEventListener('click', saveChanges); // Add event listener
-
-        // Add Cancel button
-        const cardBtns = caract.querySelector('.card-btns');
-        const cancelButton = document.createElement('button');
-        cancelButton.className = 'btn-c';
-        cancelButton.textContent = 'Cancelar';
-        cancelButton.onclick = () => toggleEditMode(id_tomb); // Revert changes
-        cardBtns.insertBefore(cancelButton, editButton.nextSibling);
-
+        editButton.dataset.id = id_tomb;
+        editButton.addEventListener('click', saveChanges);
     } else {
-        // Sair do modo de edição (Cancelar ou após Salvar)
-        const saveButton = caract.querySelector('.card-btns button:first-child');
-        const cancelButton = caract.querySelector('.card-btns .btn-c');
-
-        // Remove event listener from Save button before removing/reverting
-        saveButton.removeEventListener('click', saveChanges);
-
-        // Remove Cancel button
-        if (cancelButton) {
-            cancelButton.remove();
-        }
-
+        // Sair do modo de edição
         caract.querySelectorAll('input, select, textarea').forEach(input => {
             const field = input.dataset.field;
             const newSpan = document.createElement('span');
             newSpan.className = 'editable';
             newSpan.dataset.field = field;
 
-            // Convert value back to display text
             if (field === 'funcionando') {
                 newSpan.textContent = input.value === 'true' ? 'Sim' : 'Não';
             } else if (field === 'qnt_ram' || field === 'qnt_armaz') {
-                 newSpan.textContent = input.value ? `${input.value} GB` : 'N/A';
-                 if (field === 'qnt_armaz' && input.value === '1000') newSpan.textContent = '1 TB'; // Special case for 1TB
+                newSpan.textContent = input.value ? `${input.value} GB` : 'N/A';
+                if (field === 'qnt_armaz' && input.value === '1000') newSpan.textContent = '1 TB';
             } else if (field === 'tipo_armaz') {
                 newSpan.textContent = input.value || 'N/A';
             } else if (field === 'marca' || field === 'modelo' || field === 'locat_do_disp' || field === 'descricao') {
                 newSpan.textContent = input.value || 'N/A';
             } else if (field === 'data_de_an') {
-                 // Formatar a data de volta para DD/MM/YYYY
-                 if (input.value) {
-                     const parts = input.value.split('-');
-                     if (parts.length === 3) {
-                         newSpan.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                     } else {
-                          newSpan.textContent = input.value; // Fallback if format is unexpected
-                     }
-                 } else {
-                      newSpan.textContent = 'N/A';
-                 }
+                if (input.value) {
+                    const parts = input.value.split('-');
+                    if (parts.length === 3) {
+                        newSpan.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    } else {
+                        newSpan.textContent = input.value;
+                    }
+                } else {
+                    newSpan.textContent = 'N/A';
+                }
             } else {
                 newSpan.textContent = input.value || 'N/A';
             }
@@ -428,7 +409,6 @@ function toggleEditMode(id_tomb) {
             input.replaceWith(newSpan);
         });
 
-        // Restore Edit button functionality
         editButton.textContent = 'Editar';
         editButton.onclick = () => toggleEditMode(id_tomb);
     }

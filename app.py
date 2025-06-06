@@ -13,6 +13,8 @@ from typing import Optional
 from datetime import date
 from sqlalchemy.types import String
 from sqlalchemy import func
+import json
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,6 +27,67 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
+OPTIONS_FILE = os.path.join('static', 'options.json')
+
+def load_options():
+    try:
+        # Garantir que o diretório existe
+        os.makedirs(os.path.dirname(OPTIONS_FILE), exist_ok=True)
+        
+        # Se o arquivo não existir, criar com valores padrão
+        if not os.path.exists(OPTIONS_FILE):
+            default_options = {
+                'marcas': ['Positivo', 'Lenovo', 'Daten', 'Dell', 'Acer'],
+                'tipos_dispositivo': ['Desktop', 'Notebook', 'All-in-One', 'Tablet', 'Smartphone'],
+                'tipos_armazenamento': ['NAN', 'HDD', 'SSD'],
+                'quantidades_ram': ['0', '1', '2', '4', '6', '8', '12', '16'],
+                'quantidades_armazenamento': ['0', '120', '128', '160', '240', '256', '320', '500', '1000']
+            }
+            with open(OPTIONS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(default_options, f, indent=4, ensure_ascii=False)
+            return default_options
+        
+        # Se o arquivo existir, carregar as opções
+        with open(OPTIONS_FILE, 'r', encoding='utf-8') as f:
+            options = json.load(f)
+            
+        # Garantir que todas as chaves necessárias existam
+        required_keys = ['marcas', 'tipos_dispositivo', 'tipos_armazenamento', 'quantidades_ram', 'quantidades_armazenamento']
+        for key in required_keys:
+            if key not in options:
+                options[key] = []
+                
+        return options
+    except Exception as e:
+        logger.error(f"Erro ao carregar opções: {str(e)}")
+        # Retornar opções vazias em caso de erro
+        return {
+            'marcas': [],
+            'tipos_dispositivo': [],
+            'tipos_armazenamento': [],
+            'quantidades_ram': [],
+            'quantidades_armazenamento': []
+        }
+
+def save_options(options):
+    try:
+        # Garantir que o diretório existe
+        os.makedirs(os.path.dirname(OPTIONS_FILE), exist_ok=True)
+        
+        # Garantir que todas as chaves necessárias existam
+        required_keys = ['marcas', 'tipos_dispositivo', 'tipos_armazenamento', 'quantidades_ram', 'quantidades_armazenamento']
+        for key in required_keys:
+            if key not in options:
+                options[key] = []
+        
+        # Salvar as opções
+        with open(OPTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(options, f, indent=4, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao salvar opções: {str(e)}")
+        return False
+
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting up...")
@@ -36,6 +99,31 @@ async def shutdown_event():
 @app.get("/")
 def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/login")
+def read_root(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/admin")
+def admin_dashboard(request: Request):
+    try:
+        options = load_options()
+        return templates.TemplateResponse(
+            "admin_dashboard.html",
+            {
+                "request": request,
+                "marcas": options.get('marcas', []),
+                "tipos": options.get('tipos_dispositivo', []),
+                "armazenamento": options.get('tipos_armazenamento', []),
+                "quantidades_ram": options.get('quantidades_ram', []),
+                "quantidades_armazenamento": options.get('quantidades_armazenamento', []),
+                "marcas_outros": options.get('marcas_outros', []),
+                "tipos_outros": options.get('tipos_outros', [])
+            }
+        )
+    except Exception as e:
+        logger.error(f"Erro ao carregar painel administrativo: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/outra-pagina")
 def outra_pagina(request: Request):
@@ -324,6 +412,78 @@ def create_outro_dispositivo(dispositivo: DispositivoCreateForm, db: Session = D
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/admin/options")
+def get_options():
+    try:
+        return load_options()
+    except Exception as e:
+        logger.error(f"Erro ao obter opções: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/admin/options/{option_type}")
+def add_option(option_type: str, value: dict = Body(...)):
+    try:
+        if not value or 'value' not in value:
+            raise HTTPException(status_code=400, detail="Valor não fornecido")
+        
+        options = load_options()
+        option_key = {
+            'marcas': 'marcas',
+            'tipos_dispositivo': 'tipos_dispositivo',
+            'tipos_armazenamento': 'tipos_armazenamento',
+            'quantidades_ram': 'quantidades_ram',
+            'quantidades_armazenamento': 'quantidades_armazenamento'
+        }.get(option_type)
+        
+        if not option_key:
+            raise HTTPException(status_code=400, detail="Tipo de opção inválido")
+        
+        # Converter para string se for número
+        value_str = str(value['value'])
+        
+        if value_str in options[option_key]:
+            raise HTTPException(status_code=400, detail="Valor já existe")
+        
+        options[option_key].append(value_str)
+        if not save_options(options):
+            raise HTTPException(status_code=500, detail="Erro ao salvar opções")
+        
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao adicionar opção: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/admin/options/{option_type}/{value}")
+def delete_option(option_type: str, value: str):
+    try:
+        options = load_options()
+        option_key = {
+            'marcas': 'marcas',
+            'tipos_dispositivo': 'tipos_dispositivo',
+            'tipos_armazenamento': 'tipos_armazenamento',
+            'quantidades_ram': 'quantidades_ram',
+            'quantidades_armazenamento': 'quantidades_armazenamento'
+        }.get(option_type)
+        
+        if not option_key:
+            raise HTTPException(status_code=400, detail="Tipo de opção inválido")
+        
+        if value not in options[option_key]:
+            raise HTTPException(status_code=404, detail="Valor não encontrado")
+        
+        options[option_key].remove(value)
+        if not save_options(options):
+            raise HTTPException(status_code=500, detail="Erro ao salvar opções")
+        
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao excluir opção: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

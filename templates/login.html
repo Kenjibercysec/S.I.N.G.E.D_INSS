@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SINGED INSS - Login Administrador</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header"> 
+            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
+        </header>
+        
+        <div class="login-container">
+            <h2 style="color: #0047a5;">Login do Administrador</h2>
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+            <form action="/admin/login" method="POST" class="login-form">
+                <div class="form-group">
+                    <label for="username">Usuário:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="button">Entrar</button>
+            </form>
+        </div>
+        
+        <footer>
+            <a href="/" class="back-link">Voltar para a página inicial</a>
+            <p>Desenvolvido por <a href="https://github.com/Vitorhugofsousa" target="_blank">Vitor Hugo</a> e 
+                <a href="https://github.com/Kenjibercysec" target="_blank">Silas Kenji</a></p>
+        </footer>
+    </div>
+</body>
+</html> 
