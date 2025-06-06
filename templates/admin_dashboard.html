@@ -17,6 +17,7 @@
             <h2 style="color: #0047a5;">Painel Administrativo</h2>
             
             <div class="admin-sections">
+                <h2 style="color: #0047a5; margin-top: 2rem;">Gerenciar Opções - Computadores</h2>
                 <div class="admin-section">
                     <h3>Gerenciar Marcas</h3>
                     <div class="field-management">
@@ -26,7 +27,7 @@
                                 {% for marca in marcas %}
                                 <li>
                                     {{ marca }}
-                                    <button class="btn-delete" onclick="deleteValue('marca', '{{ marca }}')">
+                                    <button class="btn-delete" onclick="deleteValue('marcas', '{{ marca }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </li>
@@ -35,7 +36,7 @@
                         </div>
                         <div class="add-value">
                             <input type="text" id="nova-marca" placeholder="Nova marca">
-                            <button class="button" onclick="addValue('marca')">Adicionar</button>
+                            <button class="button" onclick="addValue('marcas')">Adicionar</button>
                         </div>
                     </div>
                 </div>
@@ -49,7 +50,7 @@
                                 {% for tipo in tipos %}
                                 <li>
                                     {{ tipo }}
-                                    <button class="btn-delete" onclick="deleteValue('tipo', '{{ tipo }}')">
+                                    <button class="btn-delete" onclick="deleteValue('tipos_dispositivo', '{{ tipo }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </li>
@@ -58,7 +59,7 @@
                         </div>
                         <div class="add-value">
                             <input type="text" id="novo-tipo" placeholder="Novo tipo">
-                            <button class="button" onclick="addValue('tipo')">Adicionar</button>
+                            <button class="button" onclick="addValue('tipos_dispositivo')">Adicionar</button>
                         </div>
                     </div>
                 </div>
@@ -72,7 +73,7 @@
                                 {% for tipo in armazenamento %}
                                 <li>
                                     {{ tipo }}
-                                    <button class="btn-delete" onclick="deleteValue('armazenamento', '{{ tipo }}')">
+                                    <button class="btn-delete" onclick="deleteValue('tipos_armazenamento', '{{ tipo }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </li>
@@ -81,21 +82,21 @@
                         </div>
                         <div class="add-value">
                             <input type="text" id="novo-armazenamento" placeholder="Novo tipo">
-                            <button class="button" onclick="addValue('armazenamento')">Adicionar</button>
+                            <button class="button" onclick="addValue('tipos_armazenamento')">Adicionar</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="admin-section">
-                    <h3>Gerenciar Localizações</h3>
+                    <h3>Gerenciar Quantidades de RAM</h3>
                     <div class="field-management">
                         <div class="current-values">
-                            <h4>Localizações Atuais:</h4>
-                            <ul id="localizacoes-list">
-                                {% for loc in localizacoes %}
+                            <h4>Quantidades Atuais:</h4>
+                            <ul id="ram-list">
+                                {% for qtd in quantidades_ram %}
                                 <li>
-                                    {{ loc }}
-                                    <button class="btn-delete" onclick="deleteValue('localizacao', '{{ loc }}')">
+                                    {{ qtd }} GB
+                                    <button class="btn-delete" onclick="deleteValue('quantidades_ram', '{{ qtd }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </li>
@@ -103,8 +104,78 @@
                             </ul>
                         </div>
                         <div class="add-value">
-                            <input type="text" id="nova-localizacao" placeholder="Nova localização">
-                            <button class="button" onclick="addValue('localizacao')">Adicionar</button>
+                            <input type="number" id="nova-ram" placeholder="Nova quantidade">
+                            <button class="button" onclick="addValue('quantidades_ram')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Quantidades de Armazenamento</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Quantidades Atuais:</h4>
+                            <ul id="armazenamento-qtd-list">
+                                {% for qtd in quantidades_armazenamento %}
+                                <li>
+                                    {{ qtd }} GB
+                                    <button class="btn-delete" onclick="deleteValue('quantidades_armazenamento', '{{ qtd }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="number" id="nova-armazenamento-qtd" placeholder="Nova quantidade">
+                            <button class="button" onclick="addValue('quantidades_armazenamento')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 style="color: #0047a5; margin-top: 2rem;">Gerenciar Opções - Outros Dispositivos</h2>
+                <div class="admin-section">
+                    <h3>Gerenciar Marcas</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Marcas Atuais:</h4>
+                            <ul id="marcas-outros-list">
+                                {% for marca in marcas_outros %}
+                                <li>
+                                    {{ marca }}
+                                    <button class="btn-delete" onclick="deleteValue('marcas_outros', '{{ marca }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="nova-marca-outros" placeholder="Nova marca">
+                            <button class="button" onclick="addValue('marcas_outros')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Tipos de Dispositivo</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Tipos Atuais:</h4>
+                            <ul id="tipos-outros-list">
+                                {% for tipo in tipos_outros %}
+                                <li>
+                                    {{ tipo }}
+                                    <button class="btn-delete" onclick="deleteValue('tipos_outros', '{{ tipo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-tipo-outros" placeholder="Novo tipo">
+                            <button class="button" onclick="addValue('tipos_outros')">Adicionar</button>
                         </div>
                     </div>
                 </div>
@@ -119,13 +190,43 @@
     </div>
 
     <script>
-        async function addValue(field, value) {
-            const inputId = `novo-${field}`;
+        async function addValue(field) {
+            let inputId;
+            switch (field) {
+                case 'marcas':
+                    inputId = 'nova-marca';
+                    break;
+                case 'tipos_dispositivo':
+                    inputId = 'novo-tipo';
+                    break;
+                case 'tipos_armazenamento':
+                    inputId = 'novo-armazenamento';
+                    break;
+                case 'quantidades_ram':
+                    inputId = 'nova-ram';
+                    break;
+                case 'quantidades_armazenamento':
+                    inputId = 'nova-armazenamento-qtd';
+                    break;
+                case 'marcas_outros':
+                    inputId = 'nova-marca-outros';
+                    break;
+                case 'tipos_outros':
+                    inputId = 'novo-tipo-outros';
+                    break;
+                default:
+                    alert('Tipo de campo inválido');
+                    return;
+            }
+
             const value = document.getElementById(inputId).value;
-            if (!value) return;
+            if (!value) {
+                alert('Por favor, preencha o campo');
+                return;
+            }
 
             try {
-                const response = await fetch(`/admin/fields/${field}`, {
+                const response = await fetch(`/admin/options/${field}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -133,11 +234,13 @@
                     body: JSON.stringify({ value: value })
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    const list = document.getElementById(`${field}s-list`);
+                    const list = document.getElementById(`${field.split('_').pop()}-list`);
                     const li = document.createElement('li');
                     li.innerHTML = `
-                        ${value}
+                        ${value}${field.includes('quantidades') ? ' GB' : ''}
                         <button class="btn-delete" onclick="deleteValue('${field}', '${value}')">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -145,7 +248,7 @@
                     list.appendChild(li);
                     document.getElementById(inputId).value = '';
                 } else {
-                    alert('Erro ao adicionar valor');
+                    alert(data.detail || 'Erro ao adicionar valor');
                 }
             } catch (error) {
                 console.error('Erro:', error);
@@ -157,21 +260,23 @@
             if (!confirm('Tem certeza que deseja excluir este valor?')) return;
 
             try {
-                const response = await fetch(`/admin/fields/${field}/${encodeURIComponent(value)}`, {
+                const response = await fetch(`/admin/options/${field}/${encodeURIComponent(value)}`, {
                     method: 'DELETE'
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    const list = document.getElementById(`${field}s-list`);
+                    const list = document.getElementById(`${field.split('_').pop()}-list`);
                     const items = list.getElementsByTagName('li');
                     for (let item of items) {
-                        if (item.textContent.trim() === value) {
+                        if (item.textContent.trim() === value + (field.includes('quantidades') ? ' GB' : '')) {
                             item.remove();
                             break;
                         }
                     }
                 } else {
-                    alert('Erro ao excluir valor');
+                    alert(data.detail || 'Erro ao excluir valor');
                 }
             } catch (error) {
                 console.error('Erro:', error);

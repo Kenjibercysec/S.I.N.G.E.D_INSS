@@ -76,5 +76,54 @@
     </div>
     <script src="../static/inss.js"></script>
     <script src="/static/script.js"></script>
+    <script>
+    async function loadOptions() {
+        try {
+            const response = await fetch('/admin/options');
+            const options = await response.json();
+            
+            // Preencher marcas
+            const marcaSelect = document.getElementById('marca');
+            marcaSelect.innerHTML = `
+                <option value="">Selecione a marca</option>
+                ${options.marcas.map(marca => `
+                    <option value="${marca}">${marca}</option>
+                `).join('')}
+            `;
+            
+            // Preencher tipos de armazenamento
+            const tipoArmazSelect = document.getElementById('tipo_armaz');
+            tipoArmazSelect.innerHTML = `
+                <option value="">Tipo de Armazenamento</option>
+                ${options.tipos_armazenamento.map(tipo => `
+                    <option value="${tipo}">${tipo}</option>
+                `).join('')}
+            `;
+            
+            // Preencher quantidades de RAM
+            const qntRamSelect = document.getElementById('qnt_ram');
+            qntRamSelect.innerHTML = `
+                <option value="">Quantidade de memória RAM</option>
+                ${options.quantidades_ram.map(qtd => `
+                    <option value="${qtd}">${qtd}</option>
+                `).join('')}
+            `;
+            
+            // Preencher quantidades de armazenamento
+            const qntArmazSelect = document.getElementById('qnt_armaz');
+            qntArmazSelect.innerHTML = `
+                <option value="">Quantidade de Armazenamento</option>
+                ${options.quantidades_armazenamento.map(qtd => `
+                    <option value="${qtd}">${qtd}</option>
+                `).join('')}
+            `;
+        } catch (error) {
+            console.error('Erro ao carregar opções:', error);
+        }
+    }
+
+    // Carregar opções quando a página carregar
+    document.addEventListener('DOMContentLoaded', loadOptions);
+    </script>
 </body>
 </html>

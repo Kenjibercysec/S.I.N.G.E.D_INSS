@@ -72,6 +72,36 @@
     </div>
 
     <script>
+        async function loadOptions() {
+            try {
+                const response = await fetch('/admin/options');
+                const options = await response.json();
+                
+                // Preencher tipos de dispositivo
+                const tipoDispSelect = document.getElementById('tipo_de_disp');
+                tipoDispSelect.innerHTML = `
+                    <option value="" disabled selected>Tipo de Dispositivo</option>
+                    ${options.tipos_outros.map(tipo => `
+                        <option value="${tipo.toLowerCase()}">${tipo}</option>
+                    `).join('')}
+                `;
+                
+                // Preencher marcas
+                const marcaSelect = document.getElementById('marca');
+                marcaSelect.innerHTML = `
+                    <option value="" disabled selected>Marca</option>
+                    ${options.marcas_outros.map(marca => `
+                        <option value="${marca.toLowerCase()}">${marca}</option>
+                    `).join('')}
+                `;
+            } catch (error) {
+                console.error('Erro ao carregar opções:', error);
+            }
+        }
+
+        // Carregar opções quando a página carregar
+        document.addEventListener('DOMContentLoaded', loadOptions);
+
         document.getElementById('cad-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
