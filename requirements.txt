@@ -2,8 +2,6 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic
-pylance
-fastapi.staticfiles
 jinja2
 python-multipart
 alembic
