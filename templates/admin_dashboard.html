@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SINGED INSS - Painel Administrativo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header"> 
+            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
+        </header>
+        
+        <div class="admin-container">
+            <h2 style="color: #0047a5;">Painel Administrativo</h2>
+            
+            <div class="admin-sections">
+                <div class="admin-section">
+                    <h3>Gerenciar Marcas</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Marcas Atuais:</h4>
+                            <ul id="marcas-list">
+                                {% for marca in marcas %}
+                                <li>
+                                    {{ marca }}
+                                    <button class="btn-delete" onclick="deleteValue('marca', '{{ marca }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="nova-marca" placeholder="Nova marca">
+                            <button class="button" onclick="addValue('marca')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Tipos de Dispositivo</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Tipos Atuais:</h4>
+                            <ul id="tipos-list">
+                                {% for tipo in tipos %}
+                                <li>
+                                    {{ tipo }}
+                                    <button class="btn-delete" onclick="deleteValue('tipo', '{{ tipo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-tipo" placeholder="Novo tipo">
+                            <button class="button" onclick="addValue('tipo')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Tipos de Armazenamento</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Tipos Atuais:</h4>
+                            <ul id="armazenamento-list">
+                                {% for tipo in armazenamento %}
+                                <li>
+                                    {{ tipo }}
+                                    <button class="btn-delete" onclick="deleteValue('armazenamento', '{{ tipo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-armazenamento" placeholder="Novo tipo">
+                            <button class="button" onclick="addValue('armazenamento')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Localizações</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Localizações Atuais:</h4>
+                            <ul id="localizacoes-list">
+                                {% for loc in localizacoes %}
+                                <li>
+                                    {{ loc }}
+                                    <button class="btn-delete" onclick="deleteValue('localizacao', '{{ loc }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="nova-localizacao" placeholder="Nova localização">
+                            <button class="button" onclick="addValue('localizacao')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <a href="/" class="back-link">Voltar para a página inicial</a>
+            <p>Desenvolvido por <a href="https://github.com/Vitorhugofsousa" target="_blank">Vitor Hugo</a> e 
+                <a href="https://github.com/Kenjibercysec" target="_blank">Silas Kenji</a></p>
+        </footer>
+    </div>
+
+    <script>
+        async function addValue(field, value) {
+            const inputId = `novo-${field}`;
+            const value = document.getElementById(inputId).value;
+            if (!value) return;
+
+            try {
+                const response = await fetch(`/admin/fields/${field}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ value: value })
+                });
+
+                if (response.ok) {
+                    const list = document.getElementById(`${field}s-list`);
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        ${value}
+                        <button class="btn-delete" onclick="deleteValue('${field}', '${value}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    list.appendChild(li);
+                    document.getElementById(inputId).value = '';
+                } else {
+                    alert('Erro ao adicionar valor');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao adicionar valor');
+            }
+        }
+
+        async function deleteValue(field, value) {
+            if (!confirm('Tem certeza que deseja excluir este valor?')) return;
+
+            try {
+                const response = await fetch(`/admin/fields/${field}/${encodeURIComponent(value)}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    const list = document.getElementById(`${field}s-list`);
+                    const items = list.getElementsByTagName('li');
+                    for (let item of items) {
+                        if (item.textContent.trim() === value) {
+                            item.remove();
+                            break;
+                        }
+                    }
+                } else {
+                    alert('Erro ao excluir valor');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao excluir valor');
+            }
+        }
+    </script>
+</body>
+</html> 

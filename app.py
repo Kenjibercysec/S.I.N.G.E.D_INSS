@@ -37,6 +37,14 @@ async def shutdown_event():
 def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/login")
+def read_root(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/admin")
+def read_root(request: Request):
+    return templates.TemplateResponse("admin_dashboard.html", {"request": request})
+
 @app.get("/outra-pagina")
 def outra_pagina(request: Request):
     logger.info("Accessing outra-pagina route")
