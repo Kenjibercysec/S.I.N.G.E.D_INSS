@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import date
 from sqlalchemy.types import String
+from sqlalchemy import func
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -236,9 +237,15 @@ def list_dispositivos(
 def get_dispositivo_history(id_tomb: int, db: Session = Depends(get_db)):
     logger.info(f"Getting history for dispositivo with id_tomb: {id_tomb}")
     try:
-        history = db.query(LogAtualizacao).filter(LogAtualizacao.id_tomb == id_tomb).all()
+        # Buscar histórico ordenado por data, do mais recente para o mais antigo
+        history = db.query(LogAtualizacao)\
+            .filter(LogAtualizacao.id_tomb == id_tomb)\
+            .order_by(LogAtualizacao.data_hora_alteracao.desc())\
+            .all()
+
         if not history:
             return {"message": "No history found", "results": []}
+
         return {
             "message": "History retrieved successfully",
             "results": [{
@@ -247,12 +254,12 @@ def get_dispositivo_history(id_tomb: int, db: Session = Depends(get_db)):
                 "campo_alterado": h.campo_alterado,
                 "valor_antigo": h.valor_antigo,
                 "valor_novo": h.valor_novo,
-                "data_hora_alteracao": h.data_hora_alteracao
+                "data_hora_alteracao": h.data_hora_alteracao.strftime("%d/%m/%Y %H:%M:%S")
             } for h in history]
         }
     except Exception as e:
         logger.error(f"Error getting history: {e}")
-        raise HTTPException(status_code=500, detail="Error retrieving history")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/dispositivos/{id_tomb}", response_model=DispositivoOut)
 def update_dispositivo(
@@ -261,30 +268,45 @@ def update_dispositivo(
     db: Session = Depends(get_db)
 ):
     logger.info(f"Updating dispositivo with id_tomb: {id_tomb}")
+    logger.info(f"Received data: {dispositivo.dict()}")  # Debug log
+    
     try:
         db_dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
         if not db_dispositivo:
             raise HTTPException(status_code=404, detail="Dispositivo not found")
 
         # Log changes before updating
-        for field, value in dispositivo.dict().items():
-            if field != "id_tomb" and getattr(db_dispositivo, field) != value:
-                log = LogAtualizacao(
-                    id_tomb=id_tomb,
-                    campo_alterado=field,
-                    valor_antigo=str(getattr(db_dispositivo, field)),
-                    valor_novo=str(value)
-                )
-                db.add(log)
-                setattr(db_dispositivo, field, value)
+        for field, new_value in dispositivo.dict().items():
+            if field != "id_tomb":
+                old_value = getattr(db_dispositivo, field)
+                if old_value != new_value:
+                    logger.info(f"Campo {field} alterado: {old_value} -> {new_value}")  # Debug log
+                    # Registrar a alteração no log
+                    log = LogAtualizacao(
+                        id_tomb=id_tomb,
+                        campo_alterado=field,
+                        valor_antigo=str(old_value) if old_value is not None else "N/A",
+                        valor_novo=str(new_value) if new_value is not None else "N/A",
+                        data_hora_alteracao=func.now()
+                    )
+                    db.add(log)
+                    # Atualizar o valor no dispositivo
+                    setattr(db_dispositivo, field, new_value)
 
-        db.commit()
-        db.refresh(db_dispositivo)
-        return db_dispositivo
+        try:
+            db.commit()
+            db.refresh(db_dispositivo)
+            logger.info(f"Dispositivo atualizado com sucesso: {db_dispositivo.__dict__}")  # Debug log
+            return db_dispositivo
+        except Exception as commit_error:
+            db.rollback()
+            logger.error(f"Erro ao commitar alterações: {commit_error}")
+            raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
+            
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating dispositivo: {e}")
-        raise HTTPException(status_code=500, detail="Error updating dispositivo")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/outros_dispositivos/")
 def create_outro_dispositivo(dispositivo: DispositivoCreateForm, db: Session = Depends(get_db)):

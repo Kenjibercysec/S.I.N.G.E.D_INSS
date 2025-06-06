@@ -94,28 +94,27 @@ function displayDevices(devices) {
         
         // Clonar a estrutura HTML existente
         const template = `
-           
             <div class="info-box">
                 <div class="info-box-internal" id="info-box-internal">
                         <div type="button" class="btn-info-box">
                             <p><strong>Tipo de dispositivo:</strong> ${device.tipo_de_disp || "N/A"}</p>   
                         <p><strong>Nº de tombamento:</strong> ${device.id_tomb || "N/A"}</p>
                         </div>
-                    <div class="caract">
-                        <p>Marca: ${device.marca || "N/A"}</p>
+                    <div class="caract" id="caract-${device.id_tomb}">
+                        <p>Marca: <span class="editable" data-field="marca">${device.marca || "N/A"}</span></p>
                         ${device.tipo_de_disp && device.tipo_de_disp.toLowerCase() === 'computador' ? `
-                            <p>Quantidade de Memória RAM: ${device.qnt_ram || "N/A"} GB</p>
-                            <p>Quantidade de Armazenamento: ${device.qnt_armaz || "N/A"} GB</p>
-                            <p>Tipo de Armazenamento: ${device.tipo_armaz || "N/A"}</p>
+                            <p>Quantidade de Memória RAM: <span class="editable" data-field="qnt_ram">${device.qnt_ram || "N/A"} GB</span></p>
+                            <p>Quantidade de Armazenamento: <span class="editable" data-field="qnt_armaz">${device.qnt_armaz || "N/A"} GB</span></p>
+                            <p>Tipo de Armazenamento: <span class="editable" data-field="tipo_armaz">${device.tipo_armaz || "N/A"}</span></p>
                         ` : `
-                            <p>Modelo: ${device.modelo || "N/A"}</p>
+                            <p>Modelo: <span class="editable" data-field="modelo">${device.modelo || "N/A"}</span></p>
                         `}
-                        <p>Funcionando: ${device.funcionando ? "Sim" : "Não"}</p>
-                        <p>Local Atual do Dispositivo: ${device.locat_do_disp || "N/A"}</p>
-                        <p>Descrição: ${device.descricao || "N/A"}</p>
-                        <p>Data da Análise: ${device.data_de_an || "N/A"}</p>
+                        <p>Funcionando: <span class="editable" data-field="funcionando">${device.funcionando ? "Sim" : "Não"}</span></p>
+                        <p>Local Atual do Dispositivo: <span class="editable" data-field="locat_do_disp">${device.locat_do_disp || "N/A"}</span></p>
+                        <p>Descrição: <span class="editable" data-field="descricao">${device.descricao || "N/A"}</span></p>
+                        <p>Data da Análise: <span class="editable" data-field="data_de_an">${device.data_de_an || "N/A"}</span></p>
                         <div class="card-btns">
-                            <button class="btn-b" onclick="editItem(${device.id_tomb})">Editar</button>
+                            <button class="btn-b" onclick="toggleEditMode(${device.id_tomb})">Editar</button>
                             <button class="btn-c" onclick="deleteItem(${device.id_tomb})">Excluir</button>
                             <button class="btn-b" onclick="showHistory(${device.id_tomb})">Exibir Histórico</button>
                         </div>
@@ -188,31 +187,11 @@ function updateInfoBox(dispositivos) {
 
 async function editItem(id_tomb) {
     try {
-        const response = await fetch(`/dispositivos/${id_tomb}`);
-        const dispositivo = await response.json();
-        
-        // Preencher o formulário com os dados do dispositivo
-        document.getElementById('id_tomb').value = dispositivo.id_tomb;
-        document.getElementById('tipo_de_disp').value = dispositivo.tipo_de_disp;
-        document.getElementById('qnt_ram').value = dispositivo.qnt_ram;
-        document.getElementById('qnt_armaz').value = dispositivo.qnt_armaz;
-        document.getElementById('tipo_armaz').value = dispositivo.tipo_armaz;
-        document.getElementById('marca').value = dispositivo.marca;
-        document.getElementById('modelo').value = dispositivo.modelo;
-        document.getElementById('funcionando').value = dispositivo.funcionando;
-        document.getElementById('data_de_an').value = dispositivo.data_de_an;
-        document.getElementById('locat_do_disp').value = dispositivo.locat_do_disp;
-        document.getElementById('descricao').value = dispositivo.descricao;
-        
-        // Mudar para modo de edição
-        document.getElementById('cadastroForm').dataset.mode = 'edit';
-        document.getElementById('cadastroForm').dataset.id = id_tomb;
-        
-        // Redirecionar para a página de cadastro
-        window.location.href = '/cadpc';
+        // Redirecionar para a página de edição com o ID do dispositivo
+        window.location.href = `/cadpc?id=${id_tomb}`;
     } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao carregar dados do dispositivo');
+        console.error('Erro ao editar dispositivo:', error);
+        alert('Erro ao editar dispositivo. Por favor, tente novamente.');
     }
 }
 
@@ -225,14 +204,15 @@ async function deleteItem(id_tomb) {
             
             if (response.ok) {
                 alert('Dispositivo excluído com sucesso!');
-                window.location.reload();
+                // Recarregar a lista de dispositivos
+                loadDevices();
             } else {
                 const errorData = await response.json();
                 alert(`Erro ao excluir dispositivo: ${errorData.detail}`);
             }
         } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao excluir dispositivo');
+            console.error('Erro ao excluir dispositivo:', error);
+            alert('Erro ao excluir dispositivo. Por favor, tente novamente.');
         }
     }
 }
@@ -240,174 +220,308 @@ async function deleteItem(id_tomb) {
 async function showHistory(id_tomb) {
     try {
         const response = await fetch(`/dispositivos/${id_tomb}/history`);
-        const data = await response.json();
-        
-        if (!data.results || data.results.length === 0) {
-            alert('Nenhum histórico encontrado para este dispositivo');
-            return;
+        if (!response.ok) {
+            throw new Error('Erro ao carregar histórico');
         }
         
-        // Criar modal para exibir o histórico
+        const history = await response.json();
+        
+        // Criar e exibir o modal com o histórico
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.innerHTML = `
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>Histórico do Dispositivo #${id_tomb}</h2>
+                <h2>Histórico de Alterações</h2>
                 <div class="history-list">
-                    ${data.results.map(item => `
+                    ${history.map(item => `
                         <div class="history-item">
-                            <p><strong>Data:</strong> ${new Date(item.data_hora_alteracao).toLocaleString()}</p>
+                            <p><strong>Data:</strong> ${new Date(item.data_alteracao).toLocaleString()}</p>
                             <p><strong>Campo:</strong> ${item.campo_alterado}</p>
-                            <p><strong>Valor anterior:</strong> ${item.valor_antigo}</p>
-                            <p><strong>Novo valor:</strong> ${item.valor_novo}</p>
+                            <p><strong>Valor Anterior:</strong> ${item.valor_anterior}</p>
+                            <p><strong>Novo Valor:</strong> ${item.novo_valor}</p>
                         </div>
                     `).join('')}
                 </div>
             </div>
         `;
         
-        // Adicionar o modal ao documento
         document.body.appendChild(modal);
         
-        // Configurar o botão de fechar
+        // Adicionar evento para fechar o modal
         const closeBtn = modal.querySelector('.close');
         closeBtn.onclick = function() {
             modal.remove();
-        };
+        }
         
-        // Fechar o modal ao clicar fora dele
+        // Fechar modal ao clicar fora dele
         window.onclick = function(event) {
             if (event.target == modal) {
                 modal.remove();
             }
-        };
+        }
     } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao carregar histórico');
+        console.error('Erro ao carregar histórico:', error);
+        alert('Erro ao carregar histórico. Por favor, tente novamente.');
     }
 }
 
 function toggleEditMode(id_tomb) {
-    const isEditMode = document.getElementById('caract').dataset.editMode === 'true';
-    
-    if (!isEditMode) {
+    const caract = document.getElementById(`caract-${id_tomb}`);
+    const editables = caract.querySelectorAll('.editable');
+    const editButton = caract.querySelector('.btn-b');
+
+    // Remove existing listeners to avoid duplicates
+    editButton.removeEventListener('click', saveChanges);
+    editButton.onclick = null; // Clear existing onclick if any
+
+    if (editButton.textContent === 'Editar') {
         // Entrar no modo de edição
-        document.getElementById('caract').dataset.editMode = 'true';
-        
-        // Substituir spans por inputs com dropdowns
-        const marca = document.getElementById('marca-text').textContent;
-        document.getElementById('marca-text').outerHTML = `
-            <select id="edit-marca" class="form-select">
-                <option value="" disabled selected>Selecione a marca</option>
-                <option value="positivo" ${marca === 'positivo' ? 'selected' : ''}>Positivo</option>
-                <option value="Lenovo" ${marca === 'Lenovo' ? 'selected' : ''}>Lenovo</option>
-                <option value="daten" ${marca === 'daten' ? 'selected' : ''}>Daten</option>
-                <option value="dell" ${marca === 'dell' ? 'selected' : ''}>Dell</option>
-                <option value="acer" ${marca === 'outros' ? 'selected' : ''}>Acer</option>
-            </select>
-        `;
+        editables.forEach(span => {
+            const currentValue = span.textContent.trim(); // Trim whitespace
+            const field = span.dataset.field;
 
-        const qntRam = document.getElementById('qnt_ram-text').textContent;
-        document.getElementById('qnt_ram-text').outerHTML = `
-            <select id="edit-qnt_ram" class="form-select">
-                <option value="" disabled selected>Quantidade de memória RAM</option>
-                <option value="0" ${qntRam === '0' ? 'selected' : ''}>Sem memória RAM</option>
-                <option value="1" ${qntRam === '1' ? 'selected' : ''}>1 GB</option>
-                <option value="2" ${qntRam === '2' ? 'selected' : ''}>2 GB</option>
-                <option value="4" ${qntRam === '4' ? 'selected' : ''}>4 GB</option>
-                <option value="6" ${qntRam === '6' ? 'selected' : ''}>6 GB</option>
-                <option value="8" ${qntRam === '8' ? 'selected' : ''}>8 GB</option>
-                <option value="12" ${qntRam === '12' ? 'selected' : ''}>12 GB</option>
-                <option value="16" ${qntRam === '16' ? 'selected' : ''}>16 GB</option>
-            </select>
-        `;
+            let inputElement;
 
-        const qntArmaz = document.getElementById('qnt_armaz-text').textContent;
-        document.getElementById('qnt_armaz-text').outerHTML = `
-            <select id="edit-qnt_armaz" class="form-select">
-                <option value="" disabled selected>Quantidade de Armazenamento</option>
-                <option value="0" ${qntArmaz === '0' ? 'selected' : ''}>Sem Armazenamento</option>
-                <option value="120" ${qntArmaz === '120' ? 'selected' : ''}>120 GB</option>
-                <option value="128" ${qntArmaz === '128' ? 'selected' : ''}>128 GB</option>
-                <option value="160" ${qntArmaz === '160' ? 'selected' : ''}>160 GB</option>
-                <option value="240" ${qntArmaz === '240' ? 'selected' : ''}>240 GB</option>
-                <option value="256" ${qntArmaz === '256' ? 'selected' : ''}>256 GB</option>
-                <option value="320" ${qntArmaz === '320' ? 'selected' : ''}>320 GB</option>
-                <option value="500" ${qntArmaz === '500' ? 'selected' : ''}>500 GB</option>
-                <option value="1000" ${qntArmaz === '1000' ? 'selected' : ''}>1 TB</option>
-            </select>
-        `;
+            if (field === 'funcionando') {
+                inputElement = document.createElement('select');
+                inputElement.innerHTML = `
+                    <option value="true" ${currentValue === 'Sim' ? 'selected' : ''}>Sim</option>
+                    <option value="false" ${currentValue === 'Não' ? 'selected' : ''}>Não</option>
+                `;
+            } else if (field === 'data_de_an') {
+                inputElement = document.createElement('input');
+                inputElement.type = 'date';
+                // Formatar a data para YYYY-MM-DD se não for 'N/A'
+                if (currentValue && currentValue !== 'N/A') {
+                    const parts = currentValue.split('/');
+                     // Assumindo formato DD/MM/YYYY
+                    if (parts.length === 3) {
+                        inputElement.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    } else {
+                         // Tentar usar o valor atual se não for o formato esperado
+                         inputElement.value = currentValue;
+                    }
+                } else {
+                    inputElement.value = ''; // Campo vazio se for N/A
+                }
+            } else if (field === 'marca') {
+                 inputElement = document.createElement('select');
+                 inputElement.innerHTML = `
+                    <option value="">Selecione a marca</option>
+                    <option value="Positivo" ${currentValue.toLowerCase() === 'positivo' ? 'selected' : ''}>Positivo</option>
+                    <option value="Lenovo" ${currentValue.toLowerCase() === 'lenovo' ? 'selected' : ''}>Lenovo</option>
+                    <option value="Daten" ${currentValue.toLowerCase() === 'daten' ? 'selected' : ''}>Daten</option>
+                    <option value="Dell" ${currentValue.toLowerCase() === 'dell' ? 'selected' : ''}>Dell</option>
+                    <option value="Acer" ${currentValue.toLowerCase() === 'acer' ? 'selected' : ''}>Acer</option>
+                    <option value="Outro" ${!['positivo', 'lenovo', 'daten', 'dell', 'acer'].includes(currentValue.toLowerCase()) && currentValue !== 'N/A' ? 'selected' : ''}>Outro</option>
+                 `;
+            } else if (field === 'qnt_ram') {
+                inputElement = document.createElement('select');
+                 inputElement.innerHTML = `
+                    <option value="">Quantidade de memória RAM</option>
+                    <option value="0" ${currentValue === '0 GB' ? 'selected' : ''}>0</option>
+                    <option value="1" ${currentValue === '1 GB' ? 'selected' : ''}>1</option>
+                    <option value="2" ${currentValue === '2 GB' ? 'selected' : ''}>2</option>
+                    <option value="4" ${currentValue === '4 GB' ? 'selected' : ''}>4</option>
+                    <option value="6" ${currentValue === '6 GB' ? 'selected' : ''}>6</option>
+                    <option value="8" ${currentValue === '8 GB' ? 'selected' : ''}>8</option>
+                    <option value="12" ${currentValue === '12 GB' ? 'selected' : ''}>12</option>
+                    <option value="16" ${currentValue === '16 GB' ? 'selected' : ''}>16</option>
+                 `;
+            } else if (field === 'qnt_armaz') {
+                inputElement = document.createElement('select');
+                 inputElement.innerHTML = `
+                    <option value="">Quantidade de Armazenamento</option>
+                    <option value="0" ${currentValue === '0 GB' ? 'selected' : ''}>0</option>
+                    <option value="120" ${currentValue === '120 GB' ? 'selected' : ''}>120</option>
+                    <option value="128" ${currentValue === '128 GB' ? 'selected' : ''}>128</option>
+                    <option value="160" ${currentValue === '160 GB' ? 'selected' : ''}>160</option>
+                    <option value="240" ${currentValue === '240 GB' ? 'selected' : ''}>240</option>
+                    <option value="256" ${currentValue === '256 GB' ? 'selected' : ''}>256</option>
+                    <option value="320" ${currentValue === '320 GB' ? 'selected' : ''}>320</option>
+                    <option value="500" ${currentValue === '500 GB' ? 'selected' : ''}>500</option>
+                    <option value="1000" ${currentValue === '1000 GB' || currentValue === '1 TB' ? 'selected' : ''}>1000</option>
+                 `;
+            } else if (field === 'tipo_armaz') {
+                 inputElement = document.createElement('select');
+                 inputElement.innerHTML = `
+                    <option value="">Tipo de Armazenamento</option>
+                    <option value="NAN" ${currentValue === 'NAN' ? 'selected' : ''}>NAN</option>
+                    <option value="HDD" ${currentValue === 'HDD' ? 'selected' : ''}>HDD</option>
+                    <option value="SSD" ${currentValue === 'SSD' ? 'selected' : ''}>SSD</option>
+                 `;
+            } else if (field === 'descricao') {
+                inputElement = document.createElement('textarea');
+                inputElement.value = currentValue;
+                inputElement.className = 'form-input desc'; // Apply description class if needed
+            } else {
+                // Default for other fields (like modelo, locat_do_disp)
+                inputElement = document.createElement('input');
+                inputElement.type = 'text';
+                inputElement.value = currentValue;
+            }
 
-        const tipoArmaz = document.getElementById('tipo_armaz-text').textContent;
-        document.getElementById('tipo_armaz-text').outerHTML = `
-            <select id="edit-tipo_armaz" class="form-select">
-                <option value="" disabled selected>Tipo de Armazenamento</option>
-                <option value="NAN" ${tipoArmaz === 'NAN' ? 'selected' : ''}>Sem Armazenamento</option>
-                <option value="HDD" ${tipoArmaz === 'HDD' ? 'selected' : ''}>HDD</option>
-                <option value="SSD" ${tipoArmaz === 'SSD' ? 'selected' : ''}>SSD</option>
-            </select>
-        `;
+            // Copy dataset for saveChanges
+            inputElement.dataset.field = field;
+            inputElement.className += ' form-input'; // Add a common class for styling
+            span.replaceWith(inputElement);
+        });
 
-        const funcionando = document.getElementById('funcionando-text').textContent === 'Sim';
-        document.getElementById('funcionando-text').outerHTML = `
-            <select id="edit-funcionando" class="form-select">
-                <option value="" disabled selected>Funcionando?</option>
-                <option value="true" ${funcionando ? 'selected' : ''}>Sim</option>
-                <option value="false" ${!funcionando ? 'selected' : ''}>Não</option>
-            </select>
-        `;
+        editButton.textContent = 'Salvar';
+        editButton.dataset.id = id_tomb; // Store id_tomb in the button
+        editButton.addEventListener('click', saveChanges); // Add event listener
 
-        document.getElementById('locat_do_disp-text').outerHTML = `<input type="text" id="edit-locat_do_disp" class="form-input" value="${document.getElementById('locat_do_disp-text').textContent}">`;
-        document.getElementById('descricao-text').outerHTML = `<textarea id="edit-descricao" class="form-input desc">${document.getElementById('descricao-text').textContent}</textarea>`;
-        document.getElementById('data_de_an-text').outerHTML = `<input type="date" id="edit-data_de_an" class="form-input" value="${document.getElementById('data_de_an-text').textContent}">`;
+        // Add Cancel button
+        const cardBtns = caract.querySelector('.card-btns');
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'btn-c';
+        cancelButton.textContent = 'Cancelar';
+        cancelButton.onclick = () => toggleEditMode(id_tomb); // Revert changes
+        cardBtns.insertBefore(cancelButton, editButton.nextSibling);
 
-        // Atualizar botões
-        document.querySelector('.card-btns').innerHTML = `
-            <button class="btn-b" onclick="saveChanges(${id_tomb})">Salvar</button>
-            <button class="btn-c" onclick="toggleEditMode(${id_tomb})">Cancelar</button>
-            <button class="btn-b" onclick="showHistory(${id_tomb})">Exibir Histórico</button>
-        `;
     } else {
-        // Sair do modo de edição
-        document.getElementById('caract').dataset.editMode = 'false';
-        
-        // Recarregar os dados do dispositivo
-        const searchBar = document.getElementById("search-bar");
-        searchBar.value = id_tomb;
-        document.getElementById("search-btn").click();
+        // Sair do modo de edição (Cancelar ou após Salvar)
+        const saveButton = caract.querySelector('.card-btns button:first-child');
+        const cancelButton = caract.querySelector('.card-btns .btn-c');
+
+        // Remove event listener from Save button before removing/reverting
+        saveButton.removeEventListener('click', saveChanges);
+
+        // Remove Cancel button
+        if (cancelButton) {
+            cancelButton.remove();
+        }
+
+        caract.querySelectorAll('input, select, textarea').forEach(input => {
+            const field = input.dataset.field;
+            const newSpan = document.createElement('span');
+            newSpan.className = 'editable';
+            newSpan.dataset.field = field;
+
+            // Convert value back to display text
+            if (field === 'funcionando') {
+                newSpan.textContent = input.value === 'true' ? 'Sim' : 'Não';
+            } else if (field === 'qnt_ram' || field === 'qnt_armaz') {
+                 newSpan.textContent = input.value ? `${input.value} GB` : 'N/A';
+                 if (field === 'qnt_armaz' && input.value === '1000') newSpan.textContent = '1 TB'; // Special case for 1TB
+            } else if (field === 'tipo_armaz') {
+                newSpan.textContent = input.value || 'N/A';
+            } else if (field === 'marca' || field === 'modelo' || field === 'locat_do_disp' || field === 'descricao') {
+                newSpan.textContent = input.value || 'N/A';
+            } else if (field === 'data_de_an') {
+                 // Formatar a data de volta para DD/MM/YYYY
+                 if (input.value) {
+                     const parts = input.value.split('-');
+                     if (parts.length === 3) {
+                         newSpan.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                     } else {
+                          newSpan.textContent = input.value; // Fallback if format is unexpected
+                     }
+                 } else {
+                      newSpan.textContent = 'N/A';
+                 }
+            } else {
+                newSpan.textContent = input.value || 'N/A';
+            }
+
+            input.replaceWith(newSpan);
+        });
+
+        // Restore Edit button functionality
+        editButton.textContent = 'Editar';
+        editButton.onclick = () => toggleEditMode(id_tomb);
     }
 }
 
-async function saveChanges(id_tomb) {
-    const updatedData = {};
-    const form = document.getElementById(`edit-form-${id_tomb}`);
-    const inputs = form.querySelectorAll('input, select, textarea');
-    
+async function saveChanges(event) {
+    event.preventDefault(); // Prevent default form submission if any
+
+    const saveButton = event.target; // Get the clicked button
+    const id_tomb = saveButton.dataset.id; // Get id_tomb from button dataset
+
+    console.log(`ID do botão Salvar (data-id): ${id_tomb}`); // NOVO LOG AQUI
+
+    if (!id_tomb) {
+        console.error('ID do dispositivo não encontrado no botão de salvar!');
+        alert('Erro interno: ID do dispositivo não encontrado.');
+        return;
+    }
+
+    const caract = document.getElementById(`caract-${id_tomb}`);
+    const inputs = caract.querySelectorAll('input, select, textarea'); // Include textarea
+    // Montar objeto com todos os campos esperados pelo backend
+    const changes = {
+        id_tomb: parseInt(id_tomb), // Ensure id_tomb is an integer
+        // tipo_de_disp is not editable in this view, assume it's always 'Computador' or get it from non-editable span if needed
+        tipo_de_disp: caract.querySelector('p strong') ? caract.querySelector('p strong').nextSibling.textContent.replace('<strong>Tipo de dispositivo:</strong>', '').trim() : "Computador",
+        qnt_ram: null,
+        qnt_armaz: null,
+        tipo_armaz: "",
+        marca: "",
+        modelo: "",
+        funcionando: null,
+        data_de_an: null,
+        locat_do_disp: "",
+        descricao: ""
+    };
+
     inputs.forEach(input => {
-        if (input.value !== input.defaultValue) {
-            updatedData[input.name] = input.value;
+        const field = input.dataset.field; // Get field from dataset
+        if (field) {
+            if (field === 'funcionando') {
+                changes[field] = input.value === 'true';
+            } else if (field === 'qnt_ram' || field === 'qnt_armaz') {
+                changes[field] = input.value ? parseInt(input.value) : null;
+            } else if (field === 'data_de_an') {
+                 changes[field] = input.value || null;
+            } else {
+                changes[field] = input.value || "";
+            }
         }
     });
 
+    // Handle non-editable fields that need to be sent (like tipo_de_disp if not in span dataset)
+     if (!changes.tipo_de_disp || changes.tipo_de_disp === 'N/A') {
+         const tipoDispElement = caract.parentElement.querySelector('.btn-info-box p strong');
+         if (tipoDispElement && tipoDispElement.nextSibling) {
+             changes.tipo_de_disp = tipoDispElement.nextSibling.textContent.replace('<strong>Tipo de dispositivo:</strong>', '').trim() || "Computador";
+         }
+     }
+
     try {
+        console.log(`Attempting PUT for dispositivo ID: ${id_tomb}`); // Log no frontend
+        console.log('Sending data:', changes); // Log data being sent
         const response = await fetch(`/dispositivos/${id_tomb}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(updatedData)
+            body: JSON.stringify(changes)
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || 'Erro ao salvar alterações');
+        if (response.ok) {
+            // No need to parse JSON on success based on backend (returns DispositivoOut)
+            alert('Alterações salvas com sucesso!');
+             toggleEditMode(parseInt(id_tomb)); // Exit edit mode, ensure ID is int
+            loadDevices(); // Recarregar a lista
+        } else {
+            const error = await response.json();
+            let msg = '';
+            if (error.detail) {
+                if (Array.isArray(error.detail)) {
+                    msg = error.detail.map(e => `${e.loc ? e.loc.join('.') + ': ' : ''}${e.msg}`).join('\n');
+                } else {
+                    msg = error.detail;
+                }
+            } else {
+                msg = JSON.stringify(error);
+            }
+            alert(`Erro ao salvar alterações:\n${msg}`);
+             // Do not exit edit mode on error, allow user to fix
         }
-
-        alert('Alterações salvas com sucesso!');
-        toggleEditMode(id_tomb);
-        location.reload(); // Recarrega a página para mostrar os dados atualizados
     } catch (error) {
-        alert(error.message);
+        alert('Erro ao salvar alterações. Por favor, tente novamente.');
+        console.error('Erro ao salvar alterações:', error);
+         // Do not exit edit mode on error, allow user to fix
     }
 }
