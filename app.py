@@ -15,13 +15,23 @@ from sqlalchemy.types import String
 from sqlalchemy import func
 import json
 import os
+from fastapi import Response, Cookie
+from fastapi.responses import RedirectResponse
+from datetime import timedelta
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 app = FastAPI()
 
 init_db()
+
+COOKIE_EXPIRE_SECONDS = 100 * 60
+
+ADMIN_PASSWORD = "inss"
+ADMIN_USERNAME = "admin"
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -103,28 +113,59 @@ def read_root(request: Request):
 @app.get("/login")
 def read_root(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+    
+
+@app.post("/login")
+async def post_login(
+    request: Request,
+    response: Response,
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    if username.strip() == ADMIN_USERNAME and password.strip() == ADMIN_PASSWORD:
+        response = RedirectResponse(url="/admin", status_code=303)
+        response.set_cookie(
+            key="logged_in",
+            value="true",
+            httponly=True,
+            max_age=COOKIE_EXPIRE_SECONDS,
+            expires=COOKIE_EXPIRE_SECONDS
+        )
+        return response
+    else:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Credenciais inválidas",
+        })
+
 
 @app.get("/admin")
-def admin_dashboard(request: Request):
-    try:
-        options = load_options()
-        return templates.TemplateResponse(
-            "admin_dashboard.html",
-            {
-                "request": request,
-                "marcas": options.get('marcas', []),
-                "tipos": options.get('tipos_dispositivo', []),
-                "armazenamento": options.get('tipos_armazenamento', []),
-                "quantidades_ram": options.get('quantidades_ram', []),
-                "quantidades_armazenamento": options.get('quantidades_armazenamento', []),
-                "marcas_outros": options.get('marcas_outros', []),
-                "tipos_outros": options.get('tipos_outros', [])
-            }
-        )
-    except Exception as e:
-        logger.error(f"Erro ao carregar painel administrativo: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+def admin_dashboard(request: Request, logged_in: str = Cookie(None)):
+    if logged_in != "true":
+        return RedirectResponse(url="/login", status_code=303)
+    # seu código para renderizar dashboard aqui...
+    options = load_options()
+    return templates.TemplateResponse(
+        "admin_dashboard.html",
+        {
+            "request": request,
+            "marcas": options.get('marcas', []),
+            "tipos": options.get('tipos_dispositivo', []),
+            "armazenamento": options.get('tipos_armazenamento', []),
+            "quantidades_ram": options.get('quantidades_ram', []),
+            "quantidades_armazenamento": options.get('quantidades_armazenamento', []),
+            "marcas_outros": options.get('marcas_outros', []),
+            "tipos_outros": options.get('tipos_outros', [])
+        }
+    )
 
+
+@app.get("/logout")
+def logout(response: Response):
+    response = RedirectResponse(url="/login", status_code=303)
+    # Apaga o cookie definindo max_age=0
+    response.delete_cookie(key="logged_in")
+    return response
 @app.get("/outra-pagina")
 def outra_pagina(request: Request):
     logger.info("Accessing outra-pagina route")

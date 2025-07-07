@@ -563,3 +563,72 @@ footer p {
     padding: 8px 20px;
     font-size: 14px;
 }
+
+#modal-history {
+    display: block;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+#modal-history-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 700px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.history-card {
+    background-color: #f4f8ff;
+    border-left: 6px solid #0047a5;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.history-card h4 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #0047a5;
+}
+
+.history-card p {
+    margin: 4px 0;
+    color: #333;
+    font-size: 14px;
+}
+
+.history-card time {
+    font-size: 13px;
+    color: #777;
+}

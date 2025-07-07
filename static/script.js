@@ -216,55 +216,44 @@ async function deleteItem(id_tomb) {
         }
     }
 }
-
 async function showHistory(id_tomb) {
     try {
+        const modal = document.getElementById("modal-history");
+        const contentDiv = document.getElementById("history-content");
+
+        contentDiv.innerHTML = "<p>Carregando...</p>";
+        modal.style.display = "block";
+
         const response = await fetch(`/dispositivos/${id_tomb}/history`);
         if (!response.ok) {
             throw new Error('Erro ao carregar histórico');
         }
-        
-        const history = await response.json();
-        
-        // Criar e exibir o modal com o histórico
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Histórico de Alterações</h2>
-                <div class="history-list">
-                    ${history.map(item => `
-                        <div class="history-item">
-                            <p><strong>Data:</strong> ${new Date(item.data_alteracao).toLocaleString()}</p>
-                            <p><strong>Campo:</strong> ${item.campo_alterado}</p>
-                            <p><strong>Valor Anterior:</strong> ${item.valor_anterior}</p>
-                            <p><strong>Novo Valor:</strong> ${item.novo_valor}</p>
-                        </div>
-                    `).join('')}
-                </div>
+
+        const responseJson = await response.json();
+        const history = responseJson.results || [];
+
+        if (history.length === 0) {
+            contentDiv.innerHTML = "<p>Nenhuma alteração registrada.</p>";
+            return;
+        }
+
+        const historyHtml = history.map(item => `
+            <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
+                <p><strong>Data:</strong> ${item.data_hora_alteracao}</p>
+                <p><strong>Campo:</strong> ${item.campo_alterado}</p>
+                <p><strong>Valor Anterior:</strong> ${item.valor_antigo || '---'}</p>
+                <p><strong>Novo Valor:</strong> ${item.valor_novo || '---'}</p>
             </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Adicionar evento para fechar o modal
-        const closeBtn = modal.querySelector('.close');
-        closeBtn.onclick = function() {
-            modal.remove();
-        }
-        
-        // Fechar modal ao clicar fora dele
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.remove();
-            }
-        }
+        `).join("");
+
+        contentDiv.innerHTML = historyHtml;
+
     } catch (error) {
-        console.error('Erro ao carregar histórico:', error);
-        alert('Erro ao carregar histórico. Por favor, tente novamente.');
+        console.error("Erro ao carregar histórico:", error);
+        document.getElementById("history-content").innerHTML = "<p style='color: red;'>Erro ao carregar histórico.</p>";
     }
 }
+
 
 async function loadOptions() {
     try {

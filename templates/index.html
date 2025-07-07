@@ -6,6 +6,42 @@
     <title>SINGED INSS - Página Inicial</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Modal básico */
+        #modal-history {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        #modal-history-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #000;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -44,15 +80,26 @@
                 <div class="card-btns" name="card-btns">
                     <button class="btn-b" onclick="editItem()">Editar</button>
                     <button class="btn-c" onclick="deleteItem()">Excluir</button>
-                    <button class="btn-b" onclick="showHistory()">Exibir Histórico</button>
+                    <button class="btn-b" onclick="showHistory(currentTombamento)">Exibir Histórico</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal do Histórico -->
+        <div id="modal-history">
+            <div id="modal-history-content">
+                <span class="close-modal" onclick="closeHistory()">&times;</span>
+                <h3>Histórico do Dispositivo</h3>
+                <div id="history-content">
+                    <!-- Conteúdo do histórico será inserido aqui via JavaScript -->
                 </div>
             </div>
         </div>
 
         <footer>
             <a class="as" href="/login"><button type="button" style="opacity: 90%;" class="button">Login do Administrador</button></a>
-                <p>Desenvolvido por <a href="https://github.com/Vitorhugofsousa" target="_blank">Vitor Hugo</a> e 
-                    <a href="https://github.com/Kenjibercysec" target="_blank">Silas Kenji</a></p>
+            <p>Desenvolvido por <a href="https://github.com/Vitorhugofsousa" target="_blank">Vitor Hugo</a> e 
+                <a href="https://github.com/Kenjibercysec" target="_blank">Silas Kenji</a></p>
         </footer>
 
         <script src="../static/inss.js"></script>
@@ -76,6 +123,51 @@
                 } catch (error) {
                     console.error("Erro ao buscar dispositivos:", error);
                 }
+            }
+ async function showHistory(id_tomb) {
+        try {
+            const modal = document.getElementById("modal-history");
+            const contentDiv = document.getElementById("history-content");
+
+            // Limpa conteúdo anterior
+            contentDiv.innerHTML = "<p>Carregando...</p>";
+            modal.style.display = "block";
+
+            const response = await fetch(`/dispositivos/${id_tomb}/history`);
+            if (!response.ok) {
+                throw new Error('Erro ao carregar histórico');
+            }
+
+            const history = await response.json();
+
+            if (history.length === 0) {
+                contentDiv.innerHTML = "<p>Nenhuma alteração registrada.</p>";
+                return;
+            }
+
+            const historyHtml = history.map(item => `
+                <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
+                    <p><strong>Data:</strong> ${new Date(item.data_alteracao).toLocaleString()}</p>
+                    <p><strong>Campo:</strong> ${item.campo_alterado}</p>
+                    <p><strong>Valor Anterior:</strong> ${item.valor_anterior || '---'}</p>
+                    <p><strong>Novo Valor:</strong> ${item.novo_valor || '---'}</p>
+                </div>
+            `).join("");
+
+            contentDiv.innerHTML = historyHtml;
+
+        } catch (error) {
+            console.error("Erro ao carregar histórico:", error);
+            document.getElementById("history-content").innerHTML = "<p style='color: red;'>Erro ao carregar histórico.</p>";
+        }
+    }
+
+    function closeHistory() {
+        document.getElementById("modal-history").style.display = "none";
+    }
+
+            function closeHistory() {
+                document.getElementById("modal-history").style.display = "none";
             }
 
             // Carregar todos os dispositivos na inicialização
