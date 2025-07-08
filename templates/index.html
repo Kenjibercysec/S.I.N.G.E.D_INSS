@@ -124,43 +124,50 @@
                     console.error("Erro ao buscar dispositivos:", error);
                 }
             }
- async function showHistory(id_tomb) {
-        try {
-            const modal = document.getElementById("modal-history");
-            const contentDiv = document.getElementById("history-content");
+async function showHistory(id_tomb) {
+    try {
+        const modal = document.getElementById("modal-history");
+        const contentDiv = document.getElementById("history-content");
 
-            // Limpa conteúdo anterior
-            contentDiv.innerHTML = "<p>Carregando...</p>";
-            modal.style.display = "block";
+        contentDiv.innerHTML = "<p>Carregando...</p>";
+        modal.style.display = "block";
 
-            const response = await fetch(`/dispositivos/${id_tomb}/history`);
-            if (!response.ok) {
-                throw new Error('Erro ao carregar histórico');
-            }
-
-            const history = await response.json();
-
-            if (history.length === 0) {
-                contentDiv.innerHTML = "<p>Nenhuma alteração registrada.</p>";
-                return;
-            }
-
-            const historyHtml = history.map(item => `
-                <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
-                    <p><strong>Data:</strong> ${new Date(item.data_alteracao).toLocaleString()}</p>
-                    <p><strong>Campo:</strong> ${item.campo_alterado}</p>
-                    <p><strong>Valor Anterior:</strong> ${item.valor_anterior || '---'}</p>
-                    <p><strong>Novo Valor:</strong> ${item.novo_valor || '---'}</p>
-                </div>
-            `).join("");
-
-            contentDiv.innerHTML = historyHtml;
-
-        } catch (error) {
-            console.error("Erro ao carregar histórico:", error);
-            document.getElementById("history-content").innerHTML = "<p style='color: red;'>Erro ao carregar histórico.</p>";
+        const response = await fetch(`/dispositivos/${id_tomb}/history`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar histórico');
         }
+
+        const responseJson = await response.json();
+        const historyObj = responseJson.results;
+
+        if (!historyObj || typeof historyObj !== "object") {
+            contentDiv.innerHTML = "<p>Nenhuma alteração registrada.</p>";
+            return;
+        }
+
+        let historyHtml = "";
+        for (const [key, item] of Object.entries(historyObj)) {
+            historyHtml += `
+                <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
+                    <p><strong>Data:</strong> ${item.data_hora_alteracao}</p>
+                    <p><strong>Campo:</strong> ${item.campo_alterado}</p>
+                    <p><strong>Valor Anterior:</strong> ${item.valor_antigo || '---'}</p>
+                    <p><strong>Novo Valor:</strong> ${item.valor_novo || '---'}</p>
+                </div>
+            `;
+        }
+
+        contentDiv.innerHTML = historyHtml || "<p>Nenhuma alteração registrada.</p>";
+
+
+
+        contentDiv.innerHTML = historyHtml;
+
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+        document.getElementById("history-content").innerHTML = "<p style='color: red;'>Erro ao carregar histórico.</p>";
     }
+}
 
     function closeHistory() {
         document.getElementById("modal-history").style.display = "none";

@@ -230,21 +230,28 @@ async function showHistory(id_tomb) {
         }
 
         const responseJson = await response.json();
-        const history = responseJson.results || [];
+        const historyObj = responseJson.results;
 
-        if (history.length === 0) {
+        if (!historyObj || typeof historyObj !== "object") {
             contentDiv.innerHTML = "<p>Nenhuma alteração registrada.</p>";
             return;
         }
 
-        const historyHtml = history.map(item => `
-            <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
-                <p><strong>Data:</strong> ${item.data_hora_alteracao}</p>
-                <p><strong>Campo:</strong> ${item.campo_alterado}</p>
-                <p><strong>Valor Anterior:</strong> ${item.valor_antigo || '---'}</p>
-                <p><strong>Novo Valor:</strong> ${item.valor_novo || '---'}</p>
-            </div>
-        `).join("");
+        let historyHtml = "";
+        for (const [key, item] of Object.entries(historyObj)) {
+            historyHtml += `
+                <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
+                    <p><strong>Data:</strong> ${item.data_hora_alteracao}</p>
+                    <p><strong>Campo:</strong> ${item.campo_alterado}</p>
+                    <p><strong>Valor Anterior:</strong> ${item.valor_antigo || '---'}</p>
+                    <p><strong>Novo Valor:</strong> ${item.valor_novo || '---'}</p>
+                </div>
+            `;
+        }
+
+        contentDiv.innerHTML = historyHtml || "<p>Nenhuma alteração registrada.</p>";
+
+
 
         contentDiv.innerHTML = historyHtml;
 
