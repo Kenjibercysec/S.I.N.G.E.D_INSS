@@ -477,7 +477,8 @@ def add_option(option_type: str, value: dict = Body(...)):
             'tipos_dispositivo': 'tipos_dispositivo',
             'tipos_armazenamento': 'tipos_armazenamento',
             'quantidades_ram': 'quantidades_ram',
-            'quantidades_armazenamento': 'quantidades_armazenamento'
+            'quantidades_armazenamento': 'quantidades_armazenamento',
+            'estagiarios': 'estagiarios'
         }.get(option_type)
         
         if not option_key:
@@ -509,7 +510,8 @@ def delete_option(option_type: str, value: str):
             'tipos_dispositivo': 'tipos_dispositivo',
             'tipos_armazenamento': 'tipos_armazenamento',
             'quantidades_ram': 'quantidades_ram',
-            'quantidades_armazenamento': 'quantidades_armazenamento'
+            'quantidades_armazenamento': 'quantidades_armazenamento',
+            'estagiarios': 'estagiarios'
         }.get(option_type)
         
         if not option_key:
