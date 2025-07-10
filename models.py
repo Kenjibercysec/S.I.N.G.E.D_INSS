@@ -35,6 +35,7 @@ class Dispositivo(Base):
     data_de_an = Column(Date)
     locat_do_disp = Column(String(100))
     descricao = Column(Text)
+    estagiario = Column(String(50))
 
 class LogAtualizacao(Base):
     __tablename__ = "log_atualizacoes"
@@ -61,3 +62,4 @@ class OutroDispositivo(Base):
     data_de_an = Column(Date)
     locat_do_disp = Column(String)
     descricao = Column(String)
+    estagiario = Column(String)
