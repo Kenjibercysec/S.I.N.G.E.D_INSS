@@ -114,6 +114,7 @@ function displayDevices(devices) {
                         <p>Local Atual do Dispositivo: <span class="editable" data-field="locat_do_disp">${device.locat_do_disp || "N/A"}</span></p>
                         <p>Descrição: <span class="editable" data-field="descricao">${device.descricao || "N/A"}</span></p>
                         <p>Data da Análise: <span class="editable" data-field="data_de_an">${device.data_de_an || "N/A"}</span></p>
+                        <p>Estagiário: <span class="editable" data-field="estagiario">${device.estagiario || "N/A"}</span></p>
                         <div class="card-btns">
                             <button class="btn-b" onclick="toggleEditMode(${device.id_tomb})">Editar</button>
                             <button class="btn-c" onclick="deleteItem(${device.id_tomb})">Excluir</button>
@@ -133,7 +134,7 @@ function displayDevices(devices) {
         const btnInfoBox = deviceElement.querySelector('.btn-info-box');
         const caract = deviceElement.querySelector('.caract');
         btnInfoBox.addEventListener('click', function() {
-            caract.style.display = caract.style.display === 'none' ? 'block' : 'none';
+            caract.style.display = caract.style.display === 'block' ? 'none' : 'block';
         });
         
         infoBox.appendChild(deviceElement);
@@ -176,6 +177,7 @@ function updateInfoBox(dispositivos) {
             <p><strong>Modelo:</strong> ${dispositivo.modelo}</p>
             <p><strong>Localização:</strong> ${dispositivo.locat_do_disp}</p>
             <p><strong>Status:</strong> ${dispositivo.funcionando ? 'Funcionando' : 'Não funcionando'}</p>
+            <p><strong>Estagiário:</strong> ${dispositivo.estagiario || "N/A"}</p>
             <div class="action-buttons">
                 <button onclick="editItem(${dispositivo.id_tomb})">Editar</button>
                 <button onclick="deleteItem(${dispositivo.id_tomb})">Excluir</button>
@@ -218,12 +220,13 @@ async function deleteItem(id_tomb) {
     }
 }
 async function showHistory(id_tomb) {
+    console.log("showHistory chamado com id_tomb:", id_tomb);
     try {
         const modal = document.getElementById("modal-history");
         const contentDiv = document.getElementById("history-content");
 
         contentDiv.innerHTML = "<p>Carregando...</p>";
-        modal.style.display = "block";
+        modal.style.display = "none";
 
         const response = await fetch(`/dispositivos/${id_tomb}/history`);
         if (!response.ok) {
@@ -351,6 +354,14 @@ async function toggleEditMode(id_tomb) {
                         <option value="${tipo}" ${currentValue === tipo ? 'selected' : ''}>${tipo}</option>
                     `).join('')}
                 `;
+            } else if (field === 'estagiario') {
+                inputElement = document.createElement('select');
+                inputElement.innerHTML = `
+                    <option value="">Estagiário</option>
+                    ${options.estagiarios.map(estagiario => `
+                        <option value="${estagiario}" ${currentValue === estagiario ? 'selected' : ''}>${estagiario}</option>
+                    `).join('')}
+                `;
             } else if (field === 'descricao') {
                 inputElement = document.createElement('textarea');
                 inputElement.value = currentValue;
@@ -386,7 +397,7 @@ async function toggleEditMode(id_tomb) {
                 if (field === 'qnt_armaz' && input.value === '1000') newSpan.textContent = '1 TB';
             } else if (field === 'tipo_armaz') {
                 newSpan.textContent = input.value || 'N/A';
-            } else if (field === 'marca' || field === 'modelo' || field === 'locat_do_disp' || field === 'descricao') {
+            } else if (field === 'marca' || field === 'modelo' || field === 'locat_do_disp' || field === 'descricao' || field === 'estagiario') {
                 newSpan.textContent = input.value || 'N/A';
             } else if (field === 'data_de_an') {
                 if (input.value) {
@@ -503,3 +514,7 @@ async function saveChanges(event) {
          // Do not exit edit mode on error, allow user to fix
     }
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("Página carregada, modal deve estar oculto:", document.getElementById("modal-history").style.display);
+});
