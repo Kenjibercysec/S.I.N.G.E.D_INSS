@@ -18,6 +18,12 @@
         "HDD",
         "SSD"
     ],
+    "estagiarios": [
+        "João Pedro Jacó",
+        "Silas Kenji",
+        "Vitor Hugo"  
+    ],
+
     "quantidades_ram": [
         "0",
         "1",

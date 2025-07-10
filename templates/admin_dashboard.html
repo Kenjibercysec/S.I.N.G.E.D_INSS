@@ -179,6 +179,29 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Estagiários</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Estagiários Atuais:</h4>
+                                <ul id="estagiarios-list">
+                                {% for estagiario in estagiarios %}
+                                <li>
+                                    {{ estagiario }}
+                                    <button class="btn-delete" onclick="deleteValue('estagiarios', '{{ estagiario }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-estagiario" placeholder="Novo estagiário">
+                            <button class="button" onclick="addValue('estagiarios')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -214,7 +237,10 @@
                 case 'tipos_outros':
                     inputId = 'novo-tipo-outros';
                     break;
-                default:
+                case 'estagiarios':
+                    inputId = 'novo-estagiario';
+                    break;
+                    default:
                     alert('Tipo de campo inválido');
                     return;
             }

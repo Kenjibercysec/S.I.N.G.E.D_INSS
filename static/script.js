@@ -12,7 +12,8 @@ document.getElementById('cadastroForm').addEventListener('submit', async (e) => 
         funcionando: document.getElementById('funcionando').value === 'true',
         data_de_an: document.getElementById('data_de_an').value,
         locat_do_disp: document.getElementById('locat_do_disp').value,
-        descricao: document.getElementById('descricao').value
+        descricao: document.getElementById('descricao').value,
+        estagiario: document.getElementById('estagiario').value
     };
 
     try {
@@ -25,7 +26,7 @@ document.getElementById('cadastroForm').addEventListener('submit', async (e) => 
         if (response.ok) {
             alert('Dispositivo cadastrado com sucesso!');
             window.location.href = '/';
-        } else {
+        } else {    
             const errorData = await response.json();
             alert(`Erro ao cadastrar dispositivo: ${errorData.detail}`);
         }
@@ -439,7 +440,8 @@ async function saveChanges(event) {
         funcionando: null,
         data_de_an: null,
         locat_do_disp: "",
-        descricao: ""
+        descricao: "",
+        estagiario: ""
     };
 
     inputs.forEach(input => {

@@ -66,6 +66,12 @@
                     <input type="date" id="data_de_an" name="data_de_an" class="form-input" required>
                 </div>
 
+                <select id="estagiario" name="estagiario" class="form-select" required>
+                    <option value="" disabled selected>Estagiário</option>
+                    <option value="João Pedro Jacó">João Pedro Jacó</option>
+                    <option value="Silas Kenji">Silas Kenji</option>
+                    <option value="Vitor Hugo">Vitor Hugo</option>
+                </select>
                 <button type="submit" class="button">Cadastrar</button>
             </div>
         </form>
@@ -94,6 +100,14 @@
                         <option value="${marca.toLowerCase()}">${marca}</option>
                     `).join('')}
                 `;
+
+                const estagiarioSelect = document.getElementById('estagiario');
+            estagiarioSelect.innerHTML = `
+                <option value="">Estagiário</option>
+                ${options.estagiarios.map(estagiario => `
+                    <option value="${estagiario}">${estagiario}</option>
+                `).join('')}
+            `;
             } catch (error) {
                 console.error('Erro ao carregar opções:', error);
             }
@@ -116,7 +130,8 @@
                 data_de_an: document.getElementById('data_de_an').value,
                 qnt_ram: null,
                 qnt_armaz: null,
-                tipo_armaz: 'N/A'
+                tipo_armaz: 'N/A',
+                estagiario: document.getElementById('estagiario').value
             };
 
             try {

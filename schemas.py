@@ -13,6 +13,8 @@ class DispositivoBase(BaseModel):
     data_de_an: Optional[date] = None
     locat_do_disp: Optional[str] = None
     descricao: Optional[str] = None
+    estagiario: Optional[str] = None
+
 
 class DispositivoCreate(DispositivoBase):
     id_tomb: int

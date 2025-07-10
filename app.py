@@ -209,6 +209,7 @@ class DispositivoCreateForm(BaseModel):
     data_de_an: Optional[date] = None
     locat_do_disp: Optional[str] = None
     descricao: Optional[str] = None
+    estagiario: Optional[str] = None
 
 @app.post("/dispositivos/", response_model=DispositivoOut)
 def create_dispositivo(
@@ -285,7 +286,8 @@ def search_dispositivos(query: str, db: Session = Depends(get_db)):
                 "funcionando": dispositivo.funcionando,
                 "data_de_an": dispositivo.data_de_an,
                 "locat_do_disp": dispositivo.locat_do_disp,
-                "descricao": dispositivo.descricao
+                "descricao": dispositivo.descricao,
+                "estagiario": dispositivo.estagiario
             }
             dispositivos_dict.append(dispositivo_dict)
         
@@ -353,7 +355,8 @@ def list_dispositivos(
                 "funcionando": dispositivo.funcionando,
                 "data_de_an": dispositivo.data_de_an,
                 "locat_do_disp": dispositivo.locat_do_disp,
-                "descricao": dispositivo.descricao
+                "descricao": dispositivo.descricao,
+                "estagiario": dispositivo.estagiario
             }
             dispositivos_dict.append(dispositivo_dict)
         
