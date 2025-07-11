@@ -155,7 +155,8 @@ def admin_dashboard(request: Request, logged_in: str = Cookie(None)):
             "quantidades_ram": options.get('quantidades_ram', []),
             "quantidades_armazenamento": options.get('quantidades_armazenamento', []),
             "marcas_outros": options.get('marcas_outros', []),
-            "tipos_outros": options.get('tipos_outros', [])
+            "tipos_outros": options.get('tipos_outros', []),
+            "estagiarios": options.get('estagiarios', [])
         }
     )
 
