@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Request, HTTPException, Form, Body  # Adicionar Body para receber JSON
+from fastapi import FastAPI, Depends, Request, HTTPException, Form, Body, Query  # Adicionar Body para receber JSON
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse
@@ -253,27 +253,77 @@ def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
     db.commit()
     return {"detail": "Dispositivo deleted successfully"}
 
-@app.get("/dispositivos/search/{query}")
-def search_dispositivos(query: str, db: Session = Depends(get_db)):
-    logger.info(f"Searching dispositivos with query: {query}")
+@app.get("/dispositivos/search/")
+def search_dispositivos(
+    db: Session = Depends(get_db),
+    q: str = Query(None),
+    id_tomb: str = Query(None),
+    marca: str = Query(None),
+    modelo: str = Query(None),
+    funcionando: str = Query(None),
+    tipo_armaz: str = Query(None),
+    qnt_ram: str = Query(None),
+    tipo_de_disp: str = Query(None),
+):
+    logger.info(f"Searching dispositivos with advanced filters")
     try:
-        dispositivos_pc = db.query(DispositivoModel).filter(
-            DispositivoModel.id_tomb.cast(String).startswith(query)
-        ).all()
-
-        outros_dispositivos = db.query(OutroDispositivo).filter(
-            OutroDispositivo.id_tomb.cast(String).startswith(query)
-        ).all()
-
+        from sqlalchemy import and_, or_, cast, String
+        filtros_pc = []
+        filtros_outros = []
+        if q:
+            filtros_pc.append(or_(
+                DispositivoModel.id_tomb.cast(String).ilike(f"%{q}%"),
+                DispositivoModel.marca.ilike(f"%{q}%"),
+                DispositivoModel.modelo.ilike(f"%{q}%"),
+                DispositivoModel.funcionando.cast(String).ilike(f"%{q}%"),
+                DispositivoModel.tipo_armaz.ilike(f"%{q}%"),
+                DispositivoModel.qnt_ram.cast(String).ilike(f"%{q}%"),
+                DispositivoModel.tipo_de_disp.ilike(f"%{q}%")
+            ))
+            filtros_outros.append(or_(
+                OutroDispositivo.id_tomb.cast(String).ilike(f"%{q}%"),
+                OutroDispositivo.marca.ilike(f"%{q}%"),
+                OutroDispositivo.modelo.ilike(f"%{q}%"),
+                OutroDispositivo.funcionando.cast(String).ilike(f"%{q}%"),
+                OutroDispositivo.tipo_armaz.ilike(f"%{q}%"),
+                OutroDispositivo.qnt_ram.cast(String).ilike(f"%{q}%"),
+                OutroDispositivo.tipo_de_disp.ilike(f"%{q}%")
+            ))
+        else:
+            if id_tomb:
+                filtros_pc.append(DispositivoModel.id_tomb.cast(String).ilike(f"%{id_tomb}%"))
+                filtros_outros.append(OutroDispositivo.id_tomb.cast(String).ilike(f"%{id_tomb}%"))
+            if marca:
+                filtros_pc.append(DispositivoModel.marca.ilike(f"%{marca}%"))
+                filtros_outros.append(OutroDispositivo.marca.ilike(f"%{marca}%"))
+            if modelo:
+                filtros_pc.append(DispositivoModel.modelo.ilike(f"%{modelo}%"))
+                filtros_outros.append(OutroDispositivo.modelo.ilike(f"%{modelo}%"))
+            if funcionando:
+                filtros_pc.append(DispositivoModel.funcionando.cast(String).ilike(f"%{funcionando}%"))
+                filtros_outros.append(OutroDispositivo.funcionando.cast(String).ilike(f"%{funcionando}%"))
+            if tipo_armaz:
+                filtros_pc.append(DispositivoModel.tipo_armaz.ilike(f"%{tipo_armaz}%"))
+                filtros_outros.append(OutroDispositivo.tipo_armaz.ilike(f"%{tipo_armaz}%"))
+            if qnt_ram:
+                filtros_pc.append(DispositivoModel.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
+                filtros_outros.append(OutroDispositivo.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
+            if tipo_de_disp:
+                filtros_pc.append(DispositivoModel.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
+                filtros_outros.append(OutroDispositivo.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
+        if filtros_pc:
+            dispositivos_pc = db.query(DispositivoModel).filter(and_(*filtros_pc)).all()
+        else:
+            dispositivos_pc = db.query(DispositivoModel).all()
+        if filtros_outros:
+            outros_dispositivos = db.query(OutroDispositivo).filter(and_(*filtros_outros)).all()
+        else:
+            outros_dispositivos = db.query(OutroDispositivo).all()
         dispositivos = dispositivos_pc + outros_dispositivos
-
         if not dispositivos:
-            logger.warning(f"No dispositivos found for query: {query}")
+            logger.warning(f"No dispositivos found for advanced filters")
             return {"message": "No dispositivos found", "results": []}
-        
         logger.info(f"Found {len(dispositivos)} dispositivos")
-        
-        # Converter para dicionário para garantir que todos os campos estejam presentes
         dispositivos_dict = []
         for dispositivo in dispositivos:
             dispositivo_dict = {
@@ -291,7 +341,6 @@ def search_dispositivos(query: str, db: Session = Depends(get_db)):
                 "estagiario": dispositivo.estagiario
             }
             dispositivos_dict.append(dispositivo_dict)
-        
         return {
             "message": "Dispositivos found successfully",
             "results": dispositivos_dict
