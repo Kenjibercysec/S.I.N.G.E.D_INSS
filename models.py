@@ -1,25 +1,7 @@
 from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, String, Boolean, Date, Text, func
 from database import Base
 
-class Usuario(Base):
-    __tablename__ = "usuarios"
-    id = Column(Integer, primary_key=True, index=True)
-    nome = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
 
-class CampoOpcao(Base):
-    __tablename__ = "campo_opcoes"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    campo = Column(String(50), nullable=False, index=True)
-    valor = Column(String(100), nullable=False)
-    created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
-
-    __table_args__ = (
-        # Garante que não haverá valores duplicados para o mesmo campo
-        {'sqlite_autoincrement': True},
-    )
 
 class Dispositivo(Base):
     __tablename__ = "dispositivos"
