@@ -167,10 +167,10 @@ def logout(response: Response):
     # Apaga o cookie definindo max_age=0
     response.delete_cookie(key="logged_in")
     return response
-@app.get("/outra-pagina")
+@app.get("/dashboard")
 def outra_pagina(request: Request):
-    logger.info("Accessing outra-pagina route")
-    return templates.TemplateResponse("outra_pagina.html", {"request": request})
+    logger.info("Accessing dashboard")
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 @app.get("/selecao")
 def selecao(request: Request):
