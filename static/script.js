@@ -1,63 +1,125 @@
-document.getElementById('cadastroForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const formData = {
-        id_tomb: parseInt(document.getElementById('id_tomb').value),
-        tipo_de_disp: 'Computador',
-        qnt_ram: parseInt(document.getElementById('qnt_ram').value),
-        qnt_armaz: parseInt(document.getElementById('qnt_armaz').value),
-        tipo_armaz: document.getElementById('tipo_armaz').value,
-        marca: document.getElementById('marca').value,
-        modelo: document.getElementById('modelo')?.value || 'Não especificado',
-        funcionando: document.getElementById('funcionando').value === 'true',
-        data_de_an: document.getElementById('data_de_an').value,
-        locat_do_disp: document.getElementById('locat_do_disp').value,
-        descricao: document.getElementById('descricao').value,
-        estagiario: document.getElementById('estagiario').value
-    };
-
-    try {
-        const response = await fetch('/dispositivos/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
+document.addEventListener('DOMContentLoaded', function() {
+    // Cadastro PC
+    const cadastroForm = document.getElementById('cadastroForm');
+    if (cadastroForm) {
+        cadastroForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                id_tomb: parseInt(document.getElementById('id_tomb').value),
+                tipo_de_disp: 'Computador',
+                qnt_ram: parseInt(document.getElementById('qnt_ram').value),
+                qnt_armaz: parseInt(document.getElementById('qnt_armaz').value),
+                tipo_armaz: document.getElementById('tipo_armaz').value,
+                marca: document.getElementById('marca').value,
+                modelo: document.getElementById('modelo')?.value || 'Não especificado',
+                funcionando: document.getElementById('funcionando').value === 'true',
+                data_de_an: document.getElementById('data_de_an').value,
+                locat_do_disp: document.getElementById('locat_do_disp').value,
+                descricao: document.getElementById('descricao').value,
+                estagiario: document.getElementById('estagiario').value
+            };
+            try {
+                const response = await fetch('/dispositivos/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData),
+                });
+                if (response.ok) {
+                    alert('Dispositivo cadastrado com sucesso!');
+                    window.location.href = '/';
+                } else {    
+                    const errorData = await response.json();
+                    alert(`Erro ao cadastrar dispositivo: ${errorData.detail}`);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao cadastrar dispositivo. Por favor, tente novamente.');
+            }
         });
-
-        if (response.ok) {
-            alert('Dispositivo cadastrado com sucesso!');
-            window.location.href = '/';
-        } else {    
-            const errorData = await response.json();
-            alert(`Erro ao cadastrar dispositivo: ${errorData.detail}`);
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao cadastrar dispositivo. Por favor, tente novamente.');
     }
-});
-
-document.getElementById('registroForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const equipamentoId = document.getElementById('equipamentoId').value;
-    const atividade = document.getElementById('atividade').value;
-
-    const response = await fetch('http://localhost:8000/atividades', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ equipamentoId, atividade }),
-    });
-
-    if (response.ok) {
-        alert('Atividade registrada com sucesso!');
-    } else {
-        alert('Erro ao registrar atividade');
+    // Registro atividade
+    const registroForm = document.getElementById('registroForm');
+    if (registroForm) {
+        registroForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const equipamentoId = document.getElementById('equipamentoId').value;
+            const atividade = document.getElementById('atividade').value;
+            const response = await fetch('http://localhost:8000/atividades', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ equipamentoId, atividade }),
+            });
+            if (response.ok) {
+                alert('Atividade registrada com sucesso!');
+            } else {
+                alert('Erro ao registrar atividade');
+            }
+        });
     }
-});
-
-document.getElementById('deviceForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const deviceType = document.getElementById('deviceType').value;
-    window.location.href = `cadpc.html?deviceType=${deviceType}`;
+    // Device form
+    const deviceForm = document.getElementById('deviceForm');
+    if (deviceForm) {
+        deviceForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const deviceType = document.getElementById('deviceType').value;
+            window.location.href = `cadpc.html?deviceType=${deviceType}`;
+        });
+    }
+    // Busca simples
+    const searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', async function() {
+            const query = document.getElementById('search-bar').value.trim();
+            updateDeviceList(query);
+        });
+    }
+    const searchBar = document.getElementById("search-bar");
+    if (searchBar) {
+        searchBar.addEventListener("input", function() {
+            const query = this.value.trim();
+            updateDeviceList(query);
+        });
+    }
+    // Filtro avançado
+    const applyAdvancedFilter = document.getElementById('apply-advanced-filter');
+    if (applyAdvancedFilter) {
+        applyAdvancedFilter.addEventListener('click', function() {
+            const params = {};
+            const id_tomb = document.getElementById('filter-id_tomb').value.trim();
+            const marca = document.getElementById('filter-marca').value.trim();
+            const modelo = document.getElementById('filter-modelo').value.trim();
+            const funcionando = document.getElementById('filter-funcionando').value;
+            const tipo_armaz = document.getElementById('filter-tipo_armaz').value.trim();
+            const qnt_ram = document.getElementById('filter-qnt_ram').value.trim();
+            const tipo_de_disp = document.getElementById('filter-tipo_de_disp').value.trim();
+            if (id_tomb) params.id_tomb = id_tomb;
+            if (marca) params.marca = marca;
+            if (modelo) params.modelo = modelo;
+            if (funcionando) params.funcionando = funcionando;
+            if (tipo_armaz) params.tipo_armaz = tipo_armaz;
+            if (qnt_ram) params.qnt_ram = qnt_ram;
+            if (tipo_de_disp) params.tipo_de_disp = tipo_de_disp;
+            // Montar query string
+            const queryString = Object.keys(params).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
+            let url = '/dispositivos/search/';
+            // Se não houver nenhum filtro, busca todos
+            if (queryString) {
+                url += `?${queryString}`;
+            }
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    displayDevices(data.results || []);
+                    document.getElementById('advanced-filter-content').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar dispositivos:', error);
+                    alert('Erro ao buscar dispositivos');
+                });
+        });
+    }
+    // Carregar todos os dispositivos na inicialização
+    loadDevices();
 });
 
 async function loadDevices() {
@@ -67,7 +129,7 @@ async function loadDevices() {
             throw new Error('Erro ao carregar dispositivos');
         }
         const data = await response.json();
-        displayDevices(data);
+        displayDevices(data.results || data);
     } catch (error) {
         console.error("Erro ao carregar dispositivos:", error);
     }
@@ -93,24 +155,20 @@ function displayDevices(devices) {
     devices.forEach(device => {
         console.log("Processando dispositivo:", device);
         
-        // Clonar a estrutura HTML existente
+        // Exibir todos os campos buscáveis para todos os dispositivos
         const template = `
             <div class="info-box">
                 <div class="info-box-internal" id="info-box-internal">
-                        <div type="button" class="btn-info-box">
-                            <p><strong>Tipo de dispositivo:</strong> ${device.tipo_de_disp || "N/A"}</p>   
+                    <div type="button" class="btn-info-box">
+                        <p><strong>Tipo de dispositivo:</strong> ${device.tipo_de_disp || "N/A"}</p>   
                         <p><strong>Nº de tombamento:</strong> ${device.id_tomb || "N/A"}</p>
-                        </div>
+                    </div>
                     <div class="caract" id="caract-${device.id_tomb}">
                         <p>Marca: <span class="editable" data-field="marca">${device.marca || "N/A"}</span></p>
-                        ${device.tipo_de_disp && device.tipo_de_disp.toLowerCase() === 'computador' ? `
-                            <p>Quantidade de Memória RAM: <span class="editable" data-field="qnt_ram">${device.qnt_ram || "N/A"} GB</span></p>
-                            <p>Quantidade de Armazenamento: <span class="editable" data-field="qnt_armaz">${device.qnt_armaz || "N/A"} GB</span></p>
-                            <p>Tipo de Armazenamento: <span class="editable" data-field="tipo_armaz">${device.tipo_armaz || "N/A"}</span></p>
-                        ` : `
-                            <p>Modelo: <span class="editable" data-field="modelo">${device.modelo || "N/A"}</span></p>
-                        `}
-                        <p>Funcionando: <span class="editable" data-field="funcionando">${device.funcionando ? "Sim" : "Não"}</span></p>
+                        <p>Modelo: <span class="editable" data-field="modelo">${device.modelo || "N/A"}</span></p>
+                        <p>Quantidade de Memória RAM: <span class="editable" data-field="qnt_ram">${device.qnt_ram !== undefined && device.qnt_ram !== null ? device.qnt_ram + ' GB' : "N/A"}</span></p>
+                        <p>Tipo de Armazenamento: <span class="editable" data-field="tipo_armaz">${device.tipo_armaz || "N/A"}</span></p>
+                        <p>Funcionando: <span class="editable" data-field="funcionando">${device.funcionando === true ? "Sim" : device.funcionando === false ? "Não" : "N/A"}</span></p>
                         <p>Local Atual do Dispositivo: <span class="editable" data-field="locat_do_disp">${device.locat_do_disp || "N/A"}</span></p>
                         <p>Descrição: <span class="editable" data-field="descricao">${device.descricao || "N/A"}</span></p>
                         <p>Data da Análise: <span class="editable" data-field="data_de_an">${device.data_de_an || "N/A"}</span></p>
@@ -141,26 +199,34 @@ function displayDevices(devices) {
     });
 }
 
-// Carregar todos os dispositivos na inicialização
-loadDevices();
-
-// Função de busca
+// Função de busca simples (barra de busca)
 document.getElementById('search-btn').addEventListener('click', async function() {
-    const query = document.getElementById('search-bar').value;
-    try {
-        const response = await fetch(`/dispositivos/search/${query}`);
-        const data = await response.json();
-        
-        if (data.results && data.results.length > 0) {
-            updateInfoBox(data.results);
-        } else {
-            alert('Nenhum dispositivo encontrado');
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao buscar dispositivos');
-    }
+    const query = document.getElementById('search-bar').value.trim();
+    updateDeviceList(query);
 });
+
+const searchBar = document.getElementById("search-bar");
+searchBar.addEventListener("input", function() {
+    const query = this.value.trim();
+    updateDeviceList(query);
+});
+
+async function updateDeviceList(query = '') {
+    try {
+        let url = '/dispositivos/search/';
+        if (query) {
+            url += `?q=${encodeURIComponent(query)}`;
+        }
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Erro na busca');
+        }
+        const data = await response.json();
+        displayDevices(data.results || data);
+    } catch (error) {
+        console.error("Erro ao buscar dispositivos:", error);
+    }
+}
 
 function updateInfoBox(dispositivos) {
     const infoBox = document.getElementById('info-box');
