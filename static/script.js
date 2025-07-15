@@ -292,7 +292,7 @@ async function showHistory(id_tomb) {
         const contentDiv = document.getElementById("history-content");
 
         contentDiv.innerHTML = "<p>Carregando...</p>";
-        modal.style.display = "none";
+        modal.style.display = "block";
 
         const response = await fetch(`/dispositivos/${id_tomb}/history`);
         if (!response.ok) {
@@ -300,31 +300,36 @@ async function showHistory(id_tomb) {
         }
 
         const responseJson = await response.json();
-        const historyObj = responseJson.results;
+        const historyArr = responseJson.results;
 
-        if (!historyObj || typeof historyObj !== "object") {
+        if (!historyArr || !Array.isArray(historyArr) || historyArr.length === 0) {
             contentDiv.innerHTML = "<p>Nenhuma alteração registrada.</p>";
             return;
         }
 
         let historyHtml = "";
-        for (const [key, item] of Object.entries(historyObj)) {
+        for (const item of historyArr) {
+            const estado = item.estado_anterior || {};
             historyHtml += `
                 <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
-                    <p><strong>Data:</strong> ${item.data_hora_alteracao}</p>
-                    <p><strong>Campo:</strong> ${item.campo_alterado}</p>
-                    <p><strong>Valor Anterior:</strong> ${item.valor_antigo || '---'}</p>
-                    <p><strong>Novo Valor:</strong> ${item.valor_novo || '---'}</p>
+                    <p><strong>Data da alteração:</strong> ${item.data_hora_alteracao || '---'}</p>
+                    <p><strong>Nº Tombamento:</strong> ${estado.id_tomb || '---'}</p>
+                    <p><strong>Tipo de Dispositivo:</strong> ${estado.tipo_de_disp || '---'}</p>
+                    <p><strong>Marca:</strong> ${estado.marca || '---'}</p>
+                    <p><strong>Modelo:</strong> ${estado.modelo || '---'}</p>
+                    <p><strong>Quantidade de RAM:</strong> ${estado.qnt_ram || '---'}</p>
+                    <p><strong>Quantidade de Armazenamento:</strong> ${estado.qnt_armaz || '---'}</p>
+                    <p><strong>Tipo de Armazenamento:</strong> ${estado.tipo_armaz || '---'}</p>
+                    <p><strong>Funcionando:</strong> ${estado.funcionando === true ? 'Sim' : estado.funcionando === false ? 'Não' : '---'}</p>
+                    <p><strong>Local Atual:</strong> ${estado.locat_do_disp || '---'}</p>
+                    <p><strong>Descrição:</strong> ${estado.descricao || '---'}</p>
+                    <p><strong>Data da Análise:</strong> ${estado.data_de_an || '---'}</p>
+                    <p><strong>Estagiário:</strong> ${estado.estagiario || '---'}</p>
                 </div>
             `;
         }
 
         contentDiv.innerHTML = historyHtml || "<p>Nenhuma alteração registrada.</p>";
-
-
-
-        contentDiv.innerHTML = historyHtml;
-
     } catch (error) {
         console.error("Erro ao carregar histórico:", error);
         document.getElementById("history-content").innerHTML = "<p style='color: red;'>Erro ao carregar histórico.</p>";
