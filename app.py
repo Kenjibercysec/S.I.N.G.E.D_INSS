@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db, init_db
-from models import Usuario, Dispositivo as DispositivoModel, LogAtualizacao, OutroDispositivo
+from models import Dispositivo as DispositivoModel, LogAtualizacao, OutroDispositivo
 from schemas import DispositivoOut, DispositivoCreate, DispositivoUpdate  # Corrigir a importação
 import logging
 from pydantic import BaseModel
@@ -192,12 +192,6 @@ def cadother(request: Request):
     logger.info("Accessing cadother route")
     return templates.TemplateResponse("cadother.html", {"request": request})
 
-@app.get("/api/usuarios")
-def get_usuarios(db: Session = Depends(get_db)):
-    logger.info("Accessing api/usuarios route")
-    usuarios = db.query(Usuario).all()
-    return [{"id": u.id, "nome": u.nome, "email": u.email} for u in usuarios]
-
 class DispositivoCreateForm(BaseModel):
     id_tomb: int
     tipo_de_disp: str
@@ -279,9 +273,6 @@ def search_dispositivos(query: str, db: Session = Depends(get_db)):
             dispositivo_dict = {
                 "id_tomb": dispositivo.id_tomb,
                 "tipo_de_disp": dispositivo.tipo_de_disp,
-                "qnt_ram": dispositivo.qnt_ram,
-                "qnt_armaz": dispositivo.qnt_armaz,
-                "tipo_armaz": dispositivo.tipo_armaz,
                 "marca": dispositivo.marca,
                 "modelo": dispositivo.modelo,
                 "funcionando": dispositivo.funcionando,
@@ -348,9 +339,10 @@ def list_dispositivos(
             dispositivo_dict = {
                 "id_tomb": dispositivo.id_tomb,
                 "tipo_de_disp": dispositivo.tipo_de_disp,
-                "qnt_ram": dispositivo.qnt_ram,
-                "qnt_armaz": dispositivo.qnt_armaz,
-                "tipo_armaz": dispositivo.tipo_armaz,
+                # Só inclua os campos abaixo se existirem no objeto
+                **({"qnt_ram": dispositivo.qnt_ram} if hasattr(dispositivo, "qnt_ram") else {}),
+                **({"qnt_armaz": dispositivo.qnt_armaz} if hasattr(dispositivo, "qnt_armaz") else {}),
+                **({"tipo_armaz": dispositivo.tipo_armaz} if hasattr(dispositivo, "tipo_armaz") else {}),
                 "marca": dispositivo.marca,
                 "modelo": dispositivo.modelo,
                 "funcionando": dispositivo.funcionando,
@@ -370,7 +362,7 @@ def list_dispositivos(
 def get_dispositivo_history(id_tomb: int, db: Session = Depends(get_db)):
     logger.info(f"Getting history for dispositivo with id_tomb: {id_tomb}")
     try:
-        # Buscar histórico ordenado por data, do mais recente para o mais antigo
+        # Buscar histórico de alterações para o tombamento
         history = db.query(LogAtualizacao)\
             .filter(LogAtualizacao.id_tomb == id_tomb)\
             .order_by(LogAtualizacao.data_hora_alteracao.desc())\
@@ -379,16 +371,29 @@ def get_dispositivo_history(id_tomb: int, db: Session = Depends(get_db)):
         if not history:
             return {"message": "No history found", "results": []}
 
+        # Buscar data_de_an do dispositivo (ou outros_dispositivos)
+        dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
+        if not dispositivo:
+            dispositivo = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
+        data_de_an = dispositivo.data_de_an.isoformat() if dispositivo and dispositivo.data_de_an else None
+
+        # Organizar histórico pela data_de_an (se existir)
+        # Como cada log já tem data_hora_alteracao, mas a ordenação principal é por data_de_an
+        # (caso haja mais de um dispositivo com o mesmo tombamento, pode ser ajustado)
+
+        # Exibir o snapshot salvo em estado_anterior
         return {
             "message": "History retrieved successfully",
-            "results": [{
-                "id_log": h.id_log,
-                "id_tomb": h.id_tomb,
-                "campo_alterado": h.campo_alterado,
-                "valor_antigo": h.valor_antigo,
-                "valor_novo": h.valor_novo,
-                "data_hora_alteracao": h.data_hora_alteracao.strftime("%d/%m/%Y %H:%M:%S")
-            } for h in history]
+            "data_de_an": data_de_an,
+            "results": [
+                {
+                    "id_log": h.id_log,
+                    "id_tomb": h.id_tomb,
+                    "estado_anterior": json.loads(h.estado_anterior) if h.estado_anterior else None,
+                    "data_hora_alteracao": h.data_hora_alteracao.strftime("%d/%m/%Y %H:%M:%S") if h.data_hora_alteracao else None
+                }
+                for h in sorted(history, key=lambda x: x.data_hora_alteracao, reverse=True)
+            ]
         }
     except Exception as e:
         logger.error(f"Error getting history: {e}")
@@ -402,29 +407,37 @@ def update_dispositivo(
 ):
     logger.info(f"Updating dispositivo with id_tomb: {id_tomb}")
     logger.info(f"Received data: {dispositivo.dict()}")  # Debug log
-    
     try:
         db_dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
         if not db_dispositivo:
             raise HTTPException(status_code=404, detail="Dispositivo not found")
 
-        # Log changes before updating
+        # Serializar o estado anterior completo do dispositivo
+        estado_anterior = {
+            "id_tomb": db_dispositivo.id_tomb,
+            "tipo_de_disp": db_dispositivo.tipo_de_disp,
+            "qnt_ram": db_dispositivo.qnt_ram,
+            "qnt_armaz": db_dispositivo.qnt_armaz,
+            "tipo_armaz": db_dispositivo.tipo_armaz,
+            "marca": db_dispositivo.marca,
+            "modelo": db_dispositivo.modelo,
+            "funcionando": db_dispositivo.funcionando,
+            "data_de_an": db_dispositivo.data_de_an.isoformat() if db_dispositivo.data_de_an else None,
+            "locat_do_disp": db_dispositivo.locat_do_disp,
+            "descricao": db_dispositivo.descricao,
+            "estagiario": db_dispositivo.estagiario
+        }
+        log = LogAtualizacao(
+            id_tomb=id_tomb,
+            estado_anterior=json.dumps(estado_anterior, ensure_ascii=False),
+            data_hora_alteracao=func.now()
+        )
+        db.add(log)
+
+        # Atualizar os campos do dispositivo
         for field, new_value in dispositivo.dict().items():
             if field != "id_tomb":
-                old_value = getattr(db_dispositivo, field)
-                if old_value != new_value:
-                    logger.info(f"Campo {field} alterado: {old_value} -> {new_value}")  # Debug log
-                    # Registrar a alteração no log
-                    log = LogAtualizacao(
-                        id_tomb=id_tomb,
-                        campo_alterado=field,
-                        valor_antigo=str(old_value) if old_value is not None else "N/A",
-                        valor_novo=str(new_value) if new_value is not None else "N/A",
-                        data_hora_alteracao=func.now()
-                    )
-                    db.add(log)
-                    # Atualizar o valor no dispositivo
-                    setattr(db_dispositivo, field, new_value)
+                setattr(db_dispositivo, field, new_value)
 
         try:
             db.commit()
@@ -435,7 +448,6 @@ def update_dispositivo(
             db.rollback()
             logger.error(f"Erro ao commitar alterações: {commit_error}")
             raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
-            
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating dispositivo: {e}")

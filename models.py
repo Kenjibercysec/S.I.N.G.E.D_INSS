@@ -24,9 +24,7 @@ class LogAtualizacao(Base):
 
     id_log = Column(Integer, primary_key=True, index=True, autoincrement=True)
     id_tomb = Column(Integer, ForeignKey("dispositivos.id_tomb"), nullable=False)
-    campo_alterado = Column(String(50))
-    valor_antigo = Column(Text)
-    valor_novo = Column(Text)
+    estado_anterior = Column(Text)
     data_hora_alteracao = Column(TIMESTAMP, server_default=func.now())
 
 class OutroDispositivo(Base):
@@ -35,9 +33,6 @@ class OutroDispositivo(Base):
     id = Column(Integer, primary_key=True, index=True)
     id_tomb = Column(Integer, unique=True, index=True)
     tipo_de_disp = Column(String, index=True)
-    qnt_ram = Column(Integer)
-    qnt_armaz = Column(Integer)
-    tipo_armaz = Column(String)
     marca = Column(String)
     modelo = Column(String)
     funcionando = Column(Boolean)
