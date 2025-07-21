@@ -1,4 +1,32 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // LÓGICA PARA EXIBIR/ESCONDER O DROPDOWN DE FILTROS
+    const filterBtn = document.getElementById('advanced-filter-btn');
+    const filterContent = document.getElementById('advanced-filter-content');
+
+    if (filterBtn && filterContent) {
+        // Ao clicar no botão de filtros
+        filterBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Impede que o clique se propague para o document
+            const isVisible = filterContent.style.display === 'block';
+            filterContent.style.display = isVisible ? 'none' : 'block';
+
+            // Se o filtro acabou de se tornar visível, preenche as opções
+            if (!isVisible) {
+                // A função `preencherFiltrosAvancados` precisa ser definida ou estar acessível aqui
+                if (typeof preencherFiltrosAvancados === 'function') {
+                    preencherFiltrosAvancados();
+                }
+            }
+        });
+
+        // Ao clicar fora do dropdown, ele se fecha
+        document.addEventListener('click', function(event) {
+            if (!filterContent.contains(event.target) && event.target !== filterBtn) {
+                filterContent.style.display = 'none';
+            }
+        });
+    }
+
     // Cadastro PC
     const cadastroForm = document.getElementById('cadastroForm');
     if (cadastroForm) {
@@ -120,6 +148,50 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Carregar todos os dispositivos na inicialização
     loadDevices();
+
+    // Preencher selects do filtro avançado com opções do options.json
+    async function preencherFiltrosAvancados() {
+        try {
+            const response = await fetch('/static/options.json');
+            const options = await response.json();
+
+            // Marca
+            const marcaSelect = document.getElementById('filter-marca');
+            if (marcaSelect && options.marcas) {
+                marcaSelect.innerHTML = '<option value="">Qualquer</option>' +
+                    options.marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
+            }
+
+            // Tipo de Dispositivo
+            const tipoDispSelect = document.getElementById('filter-tipo_de_disp');
+            if (tipoDispSelect && options.tipos_dispositivo) {
+                tipoDispSelect.innerHTML = '<option value="">Qualquer</option>' +
+                    options.tipos_dispositivo.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
+            }
+
+            // Tipo de Armazenamento
+            const tipoArmazSelect = document.getElementById('filter-tipo_armaz');
+            if (tipoArmazSelect && options.tipos_armazenamento) {
+                tipoArmazSelect.innerHTML = '<option value="">Qualquer</option>' +
+                    options.tipos_armazenamento.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
+            }
+
+            // RAM
+            const ramSelect = document.getElementById('filter-qnt_ram');
+            if (ramSelect && options.quantidades_ram) {
+                ramSelect.innerHTML = '<option value="">Qualquer</option>' +
+                    options.quantidades_ram.map(ram => `<option value="${ram}">${ram} GB</option>`).join('');
+            }
+        } catch (e) {
+            console.error('Erro ao carregar opções para filtros avançados:', e);
+        }
+    }
+
+    // Preencher filtros sempre que o dropdown for aberto
+    const filterBtnAvancado = document.getElementById('advanced-filter-btn');
+    if (filterBtnAvancado) {
+        filterBtnAvancado.addEventListener('click', preencherFiltrosAvancados);
+    }
 });
 
 async function loadDevices() {
@@ -336,6 +408,12 @@ async function showHistory(id_tomb) {
     }
 }
 
+function closeHistory() {
+    const modal = document.getElementById("modal-history");
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
 
 async function loadOptions() {
     try {

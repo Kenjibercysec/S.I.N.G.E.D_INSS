@@ -25,10 +25,10 @@
         <div class="search-container">
             <div class="search-bar">
                 <div class="advanced-filter-dropdown" style="position: relative; display: inline-block;">
-                    <button id="advanced-filter-btn" type="button" class="filter-button">Filtros Avançados ▼</button>
+                    <button id="advanced-filter-btn" type="button" class="filter-button">Filtros▼</button>
                     <div id="advanced-filter-content" style="display: none; position: absolute; background: #fff; border: 1px solid #ccc; z-index: 10; padding: 16px; min-width: 250px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         <label style="display:block; margin-bottom: 6px;">Nº de tombamento: <input type="text" id="filter-id_tomb" class="filter-input"></label>
-                        <label style="display:block; margin-bottom: 6px;">Marca: <input type="text" id="filter-marca" class="filter-input"></label>
+                        <label style="display:block; margin-bottom: 6px;">Marca: <select id="filter-marca" class="filter-input"></select></label>
                         <label style="display:block; margin-bottom: 6px;">Modelo: <input type="text" id="filter-modelo" class="filter-input"></label>
                         <label style="display:block; margin-bottom: 6px;">Funcionando: 
                             <select id="filter-funcionando" class="filter-input">
@@ -37,9 +37,9 @@
                                 <option value="false">Não</option>
                             </select>
                         </label>
-                        <label style="display:block; margin-bottom: 6px;">Tipo de Armazenamento: <input type="text" id="filter-tipo_armaz" class="filter-input"></label>
-                        <label style="display:block; margin-bottom: 6px;">Memória RAM: <input type="text" id="filter-qnt_ram" class="filter-input"></label>
-                        <label style="display:block; margin-bottom: 6px;">Tipo de Dispositivo: <input type="text" id="filter-tipo_de_disp" class="filter-input"></label>
+                        <label style="display:block; margin-bottom: 6px;">Tipo de Armazenamento: <select id="filter-tipo_armaz" class="filter-input"></select></label>
+                        <label style="display:block; margin-bottom: 6px;">Memória RAM: <select id="filter-qnt_ram" class="filter-input"></select></label>
+                        <label style="display:block; margin-bottom: 6px;">Tipo de Dispositivo: <select id="filter-tipo_de_disp" class="filter-input"></select></label>
                         <button id="apply-advanced-filter" type="button" class="button" style="margin-top: 8px;">Filtrar</button>
                     </div>
                 </div>
@@ -69,86 +69,5 @@
 
         <script src="../static/inss.js"></script>
         <script src="../static/script.js"></script>
-        <script>
-            const searchBar = document.getElementById("search-bar");
-
-            searchBar.addEventListener("input", function() {
-                const query = this.value.trim();
-                updateDeviceList(query);
-            });
-
-            async function updateDeviceList(query = '') {
-                try {
-                    const response = await fetch(`/dispositivos/search/${query}`);
-                    if (!response.ok) {
-                        throw new Error('Erro na busca');
-                    }
-                    const data = await response.json();
-                    displayDevices(data.results);
-                } catch (error) {
-                    console.error("Erro ao buscar dispositivos:", error);
-                }
-            }
-async function showHistory(id_tomb) {
-    try {
-        const modal = document.getElementById("modal-history");
-        const contentDiv = document.getElementById("history-content");
-
-        contentDiv.innerHTML = "<p>Carregando...</p>";
-        modal.style.display = "block";
-
-        const response = await fetch(`/dispositivos/${id_tomb}/history`);
-        if (!response.ok) {
-            throw new Error('Erro ao carregar histórico');
-        }
-
-        const responseJson = await response.json();
-        const historyArr = responseJson.results;
-
-        if (!historyArr || !Array.isArray(historyArr) || historyArr.length === 0) {
-            contentDiv.innerHTML = "<p>Nenhuma alteração registrada.</p>";
-            return;
-        }
-
-        let historyHtml = "";
-        for (const item of historyArr) {
-            const estado = item.estado_anterior || {};
-            historyHtml += `
-                <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
-                    <p><strong>Data da alteração:</strong> ${item.data_hora_alteracao || '---'}</p>
-                    <p><strong>Nº Tombamento:</strong> ${estado.id_tomb || '---'}</p>
-                    <p><strong>Tipo de Dispositivo:</strong> ${estado.tipo_de_disp || '---'}</p>
-                    <p><strong>Marca:</strong> ${estado.marca || '---'}</p>
-                    <p><strong>Modelo:</strong> ${estado.modelo || '---'}</p>
-                    <p><strong>Quantidade de RAM:</strong> ${estado.qnt_ram || '---'}</p>
-                    <p><strong>Quantidade de Armazenamento:</strong> ${estado.qnt_armaz || '---'}</p>
-                    <p><strong>Tipo de Armazenamento:</strong> ${estado.tipo_armaz || '---'}</p>
-                    <p><strong>Funcionando:</strong> ${estado.funcionando === true ? 'Sim' : estado.funcionando === false ? 'Não' : '---'}</p>
-                    <p><strong>Local Atual:</strong> ${estado.locat_do_disp || '---'}</p>
-                    <p><strong>Descrição:</strong> ${estado.descricao || '---'}</p>
-                    <p><strong>Data da Análise:</strong> ${estado.data_de_an || '---'}</p>
-                    <p><strong>Estagiário:</strong> ${estado.estagiario || '---'}</p>
-                </div>
-            `;
-        }
-
-        contentDiv.innerHTML = historyHtml || "<p>Nenhuma alteração registrada.</p>";
-    } catch (error) {
-        console.error("Erro ao carregar histórico:", error);
-        document.getElementById("history-content").innerHTML = "<p style='color: red;'>Erro ao carregar histórico.</p>";
-    }
-}
-
-    function closeHistory() {
-        document.getElementById("modal-history").style.display = "none";
-    }
-
-            function closeHistory() {
-                document.getElementById("modal-history").style.display = "none";
-            }
-
-            // Carregar todos os dispositivos na inicialização
-            loadDevices();
-        </script>
     </body>
 </html>
