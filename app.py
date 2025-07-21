@@ -505,7 +505,13 @@ def update_dispositivo(
 @app.post("/outros_dispositivos/")
 def create_outro_dispositivo(dispositivo: DispositivoCreateForm, db: Session = Depends(get_db)):
     logger.info(f"Received POST request to /outros_dispositivos/ with data: {dispositivo.dict()}")
-    db_dispositivo = OutroDispositivo(**dispositivo.dict())
+    # Filtrar apenas os campos válidos para OutroDispositivo
+    outro_fields = [
+        "id_tomb", "tipo_de_disp", "marca", "modelo", "funcionando",
+        "data_de_an", "locat_do_disp", "descricao", "estagiario"
+    ]
+    outro_data = {k: v for k, v in dispositivo.dict().items() if k in outro_fields}
+    db_dispositivo = OutroDispositivo(**outro_data)
     try:
         db.add(db_dispositivo)
         db.commit()
