@@ -242,13 +242,19 @@ def read_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
 
 @app.delete("/dispositivos/{id_tomb}")
 def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
-    logger.info(f"Deleting dispositivo with id_tomb: {id_tomb}")
+    logger.info(f"Deletando dispositivo com id_tomb: {id_tomb}")
     dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
-    if dispositivo is None:
-        raise HTTPException(status_code=404, detail="Dispositivo not found")
-    db.delete(dispositivo)
-    db.commit()
-    return {"detail": "Dispositivo deleted successfully"}
+    if dispositivo:
+        db.delete(dispositivo)
+        db.commit()
+        return {"detail": "Dispositivo deletado com sucesso"}
+    # Se não achou em DispositivoModel, tenta em OutroDispositivo
+    outro = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
+    if outro:
+        db.delete(outro)
+        db.commit()
+        return {"detail": "Outro dispositivo deletado com sucesso"}
+    raise HTTPException(status_code=404, detail="Dispositivo não encontrado")
 
 @app.get("/dispositivos/search/")
 def search_dispositivos(
@@ -496,46 +502,69 @@ def update_dispositivo(
     logger.info(f"Updating dispositivo with id_tomb: {id_tomb}")
     logger.info(f"Received data: {dispositivo.dict()}")  # Debug log
     try:
+        # Primeiro tenta na tabela de computadores
         db_dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
-        if not db_dispositivo:
-            raise HTTPException(status_code=404, detail="Dispositivo not found")
+        if db_dispositivo:
+            # Serializar o estado anterior completo do dispositivo
+            estado_anterior = {
+                "id_tomb": db_dispositivo.id_tomb,
+                "tipo_de_disp": db_dispositivo.tipo_de_disp,
+                "qnt_ram": db_dispositivo.qnt_ram,
+                "qnt_armaz": db_dispositivo.qnt_armaz,
+                "tipo_armaz": db_dispositivo.tipo_armaz,
+                "marca": db_dispositivo.marca,
+                "modelo": db_dispositivo.modelo,
+                "funcionando": db_dispositivo.funcionando,
+                "data_de_an": db_dispositivo.data_de_an.isoformat() if db_dispositivo.data_de_an else None,
+                "locat_do_disp": db_dispositivo.locat_do_disp,
+                "descricao": db_dispositivo.descricao,
+                "estagiario": db_dispositivo.estagiario
+            }
+            log = LogAtualizacao(
+                id_tomb=id_tomb,
+                estado_anterior=json.dumps(estado_anterior, ensure_ascii=False),
+                data_hora_alteracao=func.now()
+            )
+            db.add(log)
 
-        # Serializar o estado anterior completo do dispositivo
-        estado_anterior = {
-            "id_tomb": db_dispositivo.id_tomb,
-            "tipo_de_disp": db_dispositivo.tipo_de_disp,
-            "qnt_ram": db_dispositivo.qnt_ram,
-            "qnt_armaz": db_dispositivo.qnt_armaz,
-            "tipo_armaz": db_dispositivo.tipo_armaz,
-            "marca": db_dispositivo.marca,
-            "modelo": db_dispositivo.modelo,
-            "funcionando": db_dispositivo.funcionando,
-            "data_de_an": db_dispositivo.data_de_an.isoformat() if db_dispositivo.data_de_an else None,
-            "locat_do_disp": db_dispositivo.locat_do_disp,
-            "descricao": db_dispositivo.descricao,
-            "estagiario": db_dispositivo.estagiario
-        }
-        log = LogAtualizacao(
-            id_tomb=id_tomb,
-            estado_anterior=json.dumps(estado_anterior, ensure_ascii=False),
-            data_hora_alteracao=func.now()
-        )
-        db.add(log)
+            # Atualizar os campos do dispositivo
+            for field, new_value in dispositivo.dict().items():
+                if field != "id_tomb":
+                    setattr(db_dispositivo, field, new_value)
 
-        # Atualizar os campos do dispositivo
-        for field, new_value in dispositivo.dict().items():
-            if field != "id_tomb":
-                setattr(db_dispositivo, field, new_value)
+            try:
+                db.commit()
+                db.refresh(db_dispositivo)
+                logger.info(f"Dispositivo atualizado com sucesso: {db_dispositivo.__dict__}")  # Debug log
+                return db_dispositivo
+            except Exception as commit_error:
+                db.rollback()
+                logger.error(f"Erro ao commitar alterações: {commit_error}")
+                raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
+        
+        # Se não achou, tenta na tabela de outros dispositivos
+        db_outro = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
+        if db_outro:
+            # Atualizar apenas os campos válidos para OutroDispositivo
+            outro_fields = [
+                "tipo_de_disp", "marca", "modelo", "funcionando",
+                "data_de_an", "locat_do_disp", "descricao", "estagiario"
+            ]
+            for field in outro_fields:
+                if hasattr(db_outro, field) and hasattr(dispositivo, field):
+                    setattr(db_outro, field, getattr(dispositivo, field))
+            try:
+                db.commit()
+                db.refresh(db_outro)
+                logger.info(f"OutroDispositivo atualizado com sucesso: {db_outro.__dict__}")
+                return db_outro
+            except Exception as commit_error:
+                db.rollback()
+                logger.error(f"Erro ao commitar alterações: {commit_error}")
+                raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
 
-        try:
-            db.commit()
-            db.refresh(db_dispositivo)
-            logger.info(f"Dispositivo atualizado com sucesso: {db_dispositivo.__dict__}")  # Debug log
-            return db_dispositivo
-        except Exception as commit_error:
-            db.rollback()
-            logger.error(f"Erro ao commitar alterações: {commit_error}")
-            raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
+        # Se não achou em nenhuma tabela
+        raise HTTPException(status_code=404, detail="Dispositivo not found")
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating dispositivo: {e}")

@@ -227,7 +227,7 @@ async function loadDevices() {
             throw new Error('Erro ao carregar dispositivos');
         }
         const data = await response.json();
-        displayDevices(data.results || data);
+        displayDevices(data); // Corrigido aqui
     } catch (error) {
         console.error("Erro ao carregar dispositivos:", error);
     }
