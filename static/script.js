@@ -208,27 +208,21 @@ async function loadDevices() {
 }
 
 function displayDevices(devices) {
-    console.log("Iniciando exibição de dispositivos:", devices);
     const infoBox = document.getElementById("info-box");
-    if (!infoBox) {
-        console.error("Elemento info-box não encontrado");
-        return;
-    }
-    
-    // Limpar conteúdo atual
+    if (!infoBox) return;
     infoBox.innerHTML = '';
-    
+
     if (!devices || !Array.isArray(devices) || devices.length === 0) {
-        console.log("Nenhum dispositivo para exibir");
         infoBox.innerHTML = '<p>Nenhum dispositivo encontrado</p>';
         return;
     }
-    
+
     devices.forEach(device => {
-        console.log("Processando dispositivo:", device);
-        
-        // Exibir todos os campos buscáveis para todos os dispositivos
-        const template = `
+        // Defina aqui os tipos que devem ser considerados "computador"
+        const tipo = (device.tipo_de_disp || "").toLowerCase();
+        const isComputador = ["computador", "desktop", "notebook", "all-in-one"].some(t => tipo.includes(t));
+
+        let template = `
             <div class="info-box">
                 <div class="info-box-internal" id="info-box-internal">
                     <div type="button" class="btn-info-box">
@@ -238,8 +232,18 @@ function displayDevices(devices) {
                     <div class="caract" id="caract-${device.id_tomb}">
                         <p>Marca: <span class="editable" data-field="marca">${device.marca || "N/A"}</span></p>
                         <p>Modelo: <span class="editable" data-field="modelo">${device.modelo || "N/A"}</span></p>
-                        <p>Quantidade de Memória RAM: <span class="editable" data-field="qnt_ram">${device.qnt_ram !== undefined && device.qnt_ram !== null ? device.qnt_ram + ' GB' : "N/A"}</span></p>
-                        <p>Tipo de Armazenamento: <span class="editable" data-field="tipo_armaz">${device.tipo_armaz || "N/A"}</span></p>
+        `;
+
+        // Só exibe RAM e armazenamento para computadores
+        if (isComputador) {
+            template += `
+                <p>Quantidade de Memória RAM: <span class="editable" data-field="qnt_ram">${device.qnt_ram !== undefined && device.qnt_ram !== null ? device.qnt_ram + ' GB' : "N/A"}</span></p>
+                <p>Quantidade de Armazenamento: <span class="editable" data-field="qnt_armaz">${device.qnt_armaz !== undefined && device.qnt_armaz !== null ? (device.qnt_armaz === 1000 ? '1 TB' : device.qnt_armaz + ' GB') : "N/A"}</span></p>
+                <p>Tipo de Armazenamento: <span class="editable" data-field="tipo_armaz">${device.tipo_armaz || "N/A"}</span></p>
+            `;
+        }
+
+        template += `
                         <p>Funcionando: <span class="editable" data-field="funcionando">${device.funcionando === true ? "Sim" : device.funcionando === false ? "Não" : "N/A"}</span></p>
                         <p>Local Atual do Dispositivo: <span class="editable" data-field="locat_do_disp">${device.locat_do_disp || "N/A"}</span></p>
                         <p>Descrição: <span class="editable" data-field="descricao">${device.descricao || "N/A"}</span></p>
@@ -254,19 +258,15 @@ function displayDevices(devices) {
                 </div>
             </div>
         `;
-        
-        // Adicionar o dispositivo ao container
+
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = template;
         const deviceElement = tempDiv.firstElementChild;
-        
-        // Adicionar evento de clique para mostrar/esconder detalhes
         const btnInfoBox = deviceElement.querySelector('.btn-info-box');
         const caract = deviceElement.querySelector('.caract');
         btnInfoBox.addEventListener('click', function() {
             caract.style.display = caract.style.display === 'block' ? 'none' : 'block';
         });
-        
         infoBox.appendChild(deviceElement);
     });
 }
@@ -434,6 +434,11 @@ async function toggleEditMode(id_tomb) {
     editButton.removeEventListener('click', saveChanges);
     editButton.onclick = null; // Clear existing onclick if any
 
+    // Descobre o tipo do dispositivo
+    const tipoText = caract.parentElement.querySelector('.btn-info-box p').textContent || "";
+    const tipo = tipoText.replace("Tipo de dispositivo:", "").trim().toLowerCase();
+    const isComputador = ["computador", "desktop", "notebook", "all-in-one"].some(t => tipo.includes(t));
+
     if (editButton.textContent === 'Editar') {
         // Carregar opções
         const options = await loadOptions();
@@ -444,9 +449,15 @@ async function toggleEditMode(id_tomb) {
 
         // Entrar no modo de edição
         editables.forEach(span => {
-            const currentValue = span.textContent.trim(); // Trim whitespace
             const field = span.dataset.field;
+            // Só permite editar RAM/armazenamento se for computador
+            if (
+                (!isComputador && (field === 'qnt_ram' || field === 'tipo_armaz'))
+            ) {
+                return; // pula esses campos para não exibir input
+            }
 
+            const currentValue = span.textContent.trim();
             let inputElement;
 
             if (field === 'funcionando') {
@@ -458,18 +469,15 @@ async function toggleEditMode(id_tomb) {
             } else if (field === 'data_de_an') {
                 inputElement = document.createElement('input');
                 inputElement.type = 'date';
-                // Formatar a data para YYYY-MM-DD se não for 'N/A'
                 if (currentValue && currentValue !== 'N/A') {
                     const parts = currentValue.split('/');
-                    // Assumindo formato DD/MM/YYYY
                     if (parts.length === 3) {
                         inputElement.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
                     } else {
-                        // Tentar usar o valor atual se não for o formato esperado
                         inputElement.value = currentValue;
                     }
                 } else {
-                    inputElement.value = ''; // Campo vazio se for N/A
+                    inputElement.value = '';
                 }
             } else if (field === 'marca') {
                 inputElement = document.createElement('select');
@@ -516,13 +524,11 @@ async function toggleEditMode(id_tomb) {
                 inputElement.value = currentValue;
                 inputElement.className = 'form-input desc';
             } else {
-                // Default for other fields (like modelo, locat_do_disp)
                 inputElement = document.createElement('input');
                 inputElement.type = 'text';
                 inputElement.value = currentValue;
             }
 
-            // Copy dataset for saveChanges
             inputElement.dataset.field = field;
             inputElement.className += ' form-input';
             span.replaceWith(inputElement);
@@ -535,6 +541,13 @@ async function toggleEditMode(id_tomb) {
         // Sair do modo de edição
         caract.querySelectorAll('input, select, textarea').forEach(input => {
             const field = input.dataset.field;
+            // Só mostra RAM/armazenamento se for computador
+            if (
+                (!isComputador && (field === 'qnt_ram' || field === 'tipo_armaz'))
+            ) {
+                input.remove();
+                return;
+            }
             const newSpan = document.createElement('span');
             newSpan.className = 'editable';
             newSpan.dataset.field = field;
