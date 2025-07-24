@@ -227,7 +227,7 @@ async function loadDevices() {
             throw new Error('Erro ao carregar dispositivos');
         }
         const data = await response.json();
-        displayDevices(data.results || data);
+        displayDevices(data); // Corrigido aqui
     } catch (error) {
         console.error("Erro ao carregar dispositivos:", error);
     }
@@ -273,7 +273,7 @@ function displayDevices(devices) {
                         <p>Funcionando: <span class="editable" data-field="funcionando">${device.funcionando === true ? "Sim" : device.funcionando === false ? "Não" : "N/A"}</span></p>
                         <p>Local Atual do Dispositivo: <span class="editable" data-field="locat_do_disp">${device.locat_do_disp || "N/A"}</span></p>
                         <p>Descrição: <span class="editable" data-field="descricao">${device.descricao || "N/A"}</span></p>
-                        <p>Data da Análise: <span class="editable" data-field="data_de_an">${device.data_de_an || "N/A"}</span></p>
+                        <p>Data da Análise: <span class="editable" data-field="data_de_an">${formatDateBR(device.data_de_an)}</span></p>
                         <p>Estagiário: <span class="editable" data-field="estagiario">${device.estagiario || "N/A"}</span></p>
                         <div class="card-btns">
                             <button class="btn-b" onclick="toggleEditMode(${device.id_tomb})">Editar</button>
@@ -706,3 +706,74 @@ async function saveChanges(event) {
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Página carregada, modal deve estar oculto:", document.getElementById("modal-history").style.display);
 });
+
+function formatDateBR(dateStr) {
+    if (!dateStr || dateStr === "N/A") return "N/A";
+    // Aceita tanto "yyyy-mm-dd" quanto "yyyy-mm-ddTHH:MM:SS"
+    const date = new Date(dateStr);
+    if (isNaN(date)) return dateStr;
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+async function loadAdminOptions() {
+    const options = await fetch('/admin/options').then(r => r.json());
+
+    // Computadores
+    renderOptionList('admin-marcas', options.marcas, 'marcas');
+    renderOptionList('admin-modelos-pc', options.modelos_pc, 'modelos_pc');
+    renderOptionList('admin-tipos-dispositivo', options.tipos_dispositivo, 'tipos_dispositivo');
+    renderOptionList('admin-tipos-armazenamento', options.tipos_armazenamento, 'tipos_armazenamento');
+    renderOptionList('admin-quantidades-ram', options.quantidades_ram, 'quantidades_ram');
+    renderOptionList('admin-quantidades-armaz', options.quantidades_armazenamento, 'quantidades_armazenamento');
+
+    // Outros Dispositivos
+    renderOptionList('admin-marcas-outros', options.marcas_outros, 'marcas_outros');
+    renderOptionList('admin-modelos-outros', options.modelo_outros, 'modelo_outros');
+    renderOptionList('admin-tipos-outros', options.tipos_outros, 'tipos_outros');
+
+    // Globais
+    renderOptionList('admin-estagiarios', options.estagiarios, 'estagiarios');
+    renderOptionList('admin-funcionando', options.funcionando, 'funcionando');
+}
+
+function renderOptionList(containerId, list, optionType) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = (list || []).map(item => `
+        <span>${item} <button onclick="deleteOption('${optionType}', '${item}')">x</button></span>
+    `).join(' ');
+}
+
+async function addOption(optionType) {
+    const inputId = {
+        'marcas': 'input-marca',
+        'modelos_pc': 'input-modelo-pc',
+        'tipos_dispositivo': 'input-tipo-dispositivo',
+        'tipos_armazenamento': 'input-tipo-armaz',
+        'quantidades_ram': 'input-ram',
+        'quantidades_armazenamento': 'input-armaz',
+        'marcas_outros': 'input-marca-outros',
+        'modelo_outros': 'input-modelo-outros',
+        'tipos_outros': 'input-tipo-outros',
+        'estagiarios': 'input-estagiario',
+        'funcionando': 'input-funcionando'
+    }[optionType];
+    const value = document.getElementById(inputId).value.trim();
+    if (!value) return alert('Digite um valor!');
+    await fetch(`/admin/options/${optionType}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({value})
+    });
+    loadAdminOptions();
+}
+
+async function deleteOption(optionType, value) {
+    await fetch(`/admin/options/${optionType}/${encodeURIComponent(value)}`, {method: 'DELETE'});
+    loadAdminOptions();
+}
+
+document.addEventListener('DOMContentLoaded', loadAdminOptions);

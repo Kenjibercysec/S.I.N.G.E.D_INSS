@@ -150,13 +150,16 @@ def admin_dashboard(request: Request, logged_in: str = Cookie(None)):
         {
             "request": request,
             "marcas": options.get('marcas', []),
+            "modelos_pc": options.get('modelos_pc', []),
             "tipos": options.get('tipos_dispositivo', []),
             "armazenamento": options.get('tipos_armazenamento', []),
             "quantidades_ram": options.get('quantidades_ram', []),
             "quantidades_armazenamento": options.get('quantidades_armazenamento', []),
             "marcas_outros": options.get('marcas_outros', []),
+            "modelo_outros": options.get('modelo_outros', []),
             "tipos_outros": options.get('tipos_outros', []),
-            "estagiarios": options.get('estagiarios', [])
+            "estagiarios": options.get('estagiarios', []),
+            "funcionando": options.get('funcionando', [])
         }
     )
 
@@ -239,13 +242,19 @@ def read_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
 
 @app.delete("/dispositivos/{id_tomb}")
 def delete_dispositivo(id_tomb: int, db: Session = Depends(get_db)):
-    logger.info(f"Deleting dispositivo with id_tomb: {id_tomb}")
+    logger.info(f"Deletando dispositivo com id_tomb: {id_tomb}")
     dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
-    if dispositivo is None:
-        raise HTTPException(status_code=404, detail="Dispositivo not found")
-    db.delete(dispositivo)
-    db.commit()
-    return {"detail": "Dispositivo deleted successfully"}
+    if dispositivo:
+        db.delete(dispositivo)
+        db.commit()
+        return {"detail": "Dispositivo deletado com sucesso"}
+    # Se não achou em DispositivoModel, tenta em OutroDispositivo
+    outro = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
+    if outro:
+        db.delete(outro)
+        db.commit()
+        return {"detail": "Outro dispositivo deletado com sucesso"}
+    raise HTTPException(status_code=404, detail="Dispositivo não encontrado")
 
 @app.get("/dispositivos/search/")
 def search_dispositivos(
@@ -284,9 +293,6 @@ def search_dispositivos(
                 OutroDispositivo.marca.ilike(f"%{q}%"),
                 OutroDispositivo.modelo.ilike(f"%{q}%"),
                 OutroDispositivo.funcionando.cast(String).ilike(f"%{q}%"),
-                OutroDispositivo.tipo_armaz.ilike(f"%{q}%"),
-                OutroDispositivo.qnt_ram.cast(String).ilike(f"%{q}%"),
-                OutroDispositivo.tipo_de_disp.ilike(f"%{q}%")
             ))
         else:
             if id_tomb:
@@ -298,18 +304,25 @@ def search_dispositivos(
             if modelo:
                 filtros_pc.append(DispositivoModel.modelo.ilike(f"%{modelo}%"))
                 filtros_outros.append(OutroDispositivo.modelo.ilike(f"%{modelo}%"))
-            if funcionando:
-                filtros_pc.append(DispositivoModel.funcionando.cast(String).ilike(f"%{funcionando}%"))
-                filtros_outros.append(OutroDispositivo.funcionando.cast(String).ilike(f"%{funcionando}%"))
+            if funcionando is not None and funcionando != "":
+                funcionando_bool = None
+                if funcionando.lower() == "true":
+                    funcionando_bool = True
+                if funcionando.lower() == "false":
+                    funcionando_bool = False
+                if funcionando_bool is not None:
+                    # Adiciona o filtro de funcionamento apenas se o valor for válido
+                    filtros_pc.append(DispositivoModel.funcionando == funcionando_bool)
+                    filtros_outros.append(OutroDispositivo.funcionando == funcionando_bool)
             if tipo_armaz:
                 filtros_pc.append(DispositivoModel.tipo_armaz.ilike(f"%{tipo_armaz}%"))
-                filtros_outros.append(OutroDispositivo.tipo_armaz.ilike(f"%{tipo_armaz}%"))
+                
             if qnt_ram:
                 filtros_pc.append(DispositivoModel.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
-                filtros_outros.append(OutroDispositivo.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
+                
             if qnt_armaz:
                 filtros_pc.append(DispositivoModel.qnt_armaz.cast(String).ilike(f"%{qnt_armaz}%"))
-                filtros_outros.append(OutroDispositivo.qnt_armaz.cast(String).ilike(f"%{qnt_armaz}%"))
+                
             if tipo_de_disp:
                 filtros_pc.append(DispositivoModel.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
                 filtros_outros.append(OutroDispositivo.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
@@ -329,10 +342,14 @@ def search_dispositivos(
             dispositivos_pc = db.query(DispositivoModel).filter(and_(*filtros_pc)).all()
         else:
             dispositivos_pc = db.query(DispositivoModel).all()
-        if filtros_outros:
-            outros_dispositivos = db.query(OutroDispositivo).filter(and_(*filtros_outros)).all()
+        # Se algum filtro de computador foi usado, não busque outros dispositivos
+        if tipo_armaz or qnt_ram or qnt_armaz:
+            outros_dispositivos = []
         else:
-            outros_dispositivos = db.query(OutroDispositivo).all()
+            if filtros_outros:
+                outros_dispositivos = db.query(OutroDispositivo).filter(and_(*filtros_outros)).all()
+            else:
+                outros_dispositivos = db.query(OutroDispositivo).all()
         dispositivos = dispositivos_pc + outros_dispositivos
         if not dispositivos:
             logger.warning(f"No dispositivos found for advanced filters")
@@ -351,6 +368,12 @@ def search_dispositivos(
                 "descricao": dispositivo.descricao,
                 "estagiario": dispositivo.estagiario
             }
+            # Se for DispositivoModel (computador), inclua os campos extras
+            if hasattr(dispositivo, "qnt_ram"):
+                dispositivo_dict["qnt_ram"] = dispositivo.qnt_ram
+                dispositivo_dict["qnt_armaz"] = dispositivo.qnt_armaz
+                dispositivo_dict["tipo_armaz"] = dispositivo.tipo_armaz
+            # Se não for, não inclui esses campos
             dispositivos_dict.append(dispositivo_dict)
         return {
             "message": "Dispositivos found successfully",
@@ -393,14 +416,17 @@ def list_dispositivos(
     logger.info(f"Listing dispositivos with skip={skip}, limit={limit}")
     try:
         # Buscar dispositivos de ambas as tabelas
-        dispositivos_pc = db.query(DispositivoModel).order_by(DispositivoModel.id_tomb.desc()).all()
-        outros_dispositivos = db.query(OutroDispositivo).order_by(OutroDispositivo.id_tomb.desc()).all()
+        dispositivos_pc = db.query(DispositivoModel).order_by(DispositivoModel.data_de_an.desc().nullslast()).all()
+        outros_dispositivos = db.query(OutroDispositivo).order_by(OutroDispositivo.data_de_an.desc().nullslast()).all()
 
         # Combinar os resultados
         todos_dispositivos = dispositivos_pc + outros_dispositivos
         
-        # Ordenar por id_tomb
-        todos_dispositivos.sort(key=lambda x: x.id_tomb, reverse=True)
+        # Ordenar por data_de_an (mais recente primeiro), tratando None como mais antigo
+        todos_dispositivos.sort(
+            key=lambda x: x.data_de_an if x.data_de_an is not None else date(1900, 1, 1),
+            reverse=True
+        )
         
         # Converter para dicionário para garantir que todos os campos estejam presentes
         dispositivos_dict = []
@@ -408,7 +434,6 @@ def list_dispositivos(
             dispositivo_dict = {
                 "id_tomb": dispositivo.id_tomb,
                 "tipo_de_disp": dispositivo.tipo_de_disp,
-                # Só inclua os campos abaixo se existirem no objeto
                 **({"qnt_ram": dispositivo.qnt_ram} if hasattr(dispositivo, "qnt_ram") else {}),
                 **({"qnt_armaz": dispositivo.qnt_armaz} if hasattr(dispositivo, "qnt_armaz") else {}),
                 **({"tipo_armaz": dispositivo.tipo_armaz} if hasattr(dispositivo, "tipo_armaz") else {}),
@@ -477,46 +502,69 @@ def update_dispositivo(
     logger.info(f"Updating dispositivo with id_tomb: {id_tomb}")
     logger.info(f"Received data: {dispositivo.dict()}")  # Debug log
     try:
+        # Primeiro tenta na tabela de computadores
         db_dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
-        if not db_dispositivo:
-            raise HTTPException(status_code=404, detail="Dispositivo not found")
+        if db_dispositivo:
+            # Serializar o estado anterior completo do dispositivo
+            estado_anterior = {
+                "id_tomb": db_dispositivo.id_tomb,
+                "tipo_de_disp": db_dispositivo.tipo_de_disp,
+                "qnt_ram": db_dispositivo.qnt_ram,
+                "qnt_armaz": db_dispositivo.qnt_armaz,
+                "tipo_armaz": db_dispositivo.tipo_armaz,
+                "marca": db_dispositivo.marca,
+                "modelo": db_dispositivo.modelo,
+                "funcionando": db_dispositivo.funcionando,
+                "data_de_an": db_dispositivo.data_de_an.isoformat() if db_dispositivo.data_de_an else None,
+                "locat_do_disp": db_dispositivo.locat_do_disp,
+                "descricao": db_dispositivo.descricao,
+                "estagiario": db_dispositivo.estagiario
+            }
+            log = LogAtualizacao(
+                id_tomb=id_tomb,
+                estado_anterior=json.dumps(estado_anterior, ensure_ascii=False),
+                data_hora_alteracao=func.now()
+            )
+            db.add(log)
 
-        # Serializar o estado anterior completo do dispositivo
-        estado_anterior = {
-            "id_tomb": db_dispositivo.id_tomb,
-            "tipo_de_disp": db_dispositivo.tipo_de_disp,
-            "qnt_ram": db_dispositivo.qnt_ram,
-            "qnt_armaz": db_dispositivo.qnt_armaz,
-            "tipo_armaz": db_dispositivo.tipo_armaz,
-            "marca": db_dispositivo.marca,
-            "modelo": db_dispositivo.modelo,
-            "funcionando": db_dispositivo.funcionando,
-            "data_de_an": db_dispositivo.data_de_an.isoformat() if db_dispositivo.data_de_an else None,
-            "locat_do_disp": db_dispositivo.locat_do_disp,
-            "descricao": db_dispositivo.descricao,
-            "estagiario": db_dispositivo.estagiario
-        }
-        log = LogAtualizacao(
-            id_tomb=id_tomb,
-            estado_anterior=json.dumps(estado_anterior, ensure_ascii=False),
-            data_hora_alteracao=func.now()
-        )
-        db.add(log)
+            # Atualizar os campos do dispositivo
+            for field, new_value in dispositivo.dict().items():
+                if field != "id_tomb":
+                    setattr(db_dispositivo, field, new_value)
 
-        # Atualizar os campos do dispositivo
-        for field, new_value in dispositivo.dict().items():
-            if field != "id_tomb":
-                setattr(db_dispositivo, field, new_value)
+            try:
+                db.commit()
+                db.refresh(db_dispositivo)
+                logger.info(f"Dispositivo atualizado com sucesso: {db_dispositivo.__dict__}")  # Debug log
+                return db_dispositivo
+            except Exception as commit_error:
+                db.rollback()
+                logger.error(f"Erro ao commitar alterações: {commit_error}")
+                raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
+        
+        # Se não achou, tenta na tabela de outros dispositivos
+        db_outro = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
+        if db_outro:
+            # Atualizar apenas os campos válidos para OutroDispositivo
+            outro_fields = [
+                "tipo_de_disp", "marca", "modelo", "funcionando",
+                "data_de_an", "locat_do_disp", "descricao", "estagiario"
+            ]
+            for field in outro_fields:
+                if hasattr(db_outro, field) and hasattr(dispositivo, field):
+                    setattr(db_outro, field, getattr(dispositivo, field))
+            try:
+                db.commit()
+                db.refresh(db_outro)
+                logger.info(f"OutroDispositivo atualizado com sucesso: {db_outro.__dict__}")
+                return db_outro
+            except Exception as commit_error:
+                db.rollback()
+                logger.error(f"Erro ao commitar alterações: {commit_error}")
+                raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
 
-        try:
-            db.commit()
-            db.refresh(db_dispositivo)
-            logger.info(f"Dispositivo atualizado com sucesso: {db_dispositivo.__dict__}")  # Debug log
-            return db_dispositivo
-        except Exception as commit_error:
-            db.rollback()
-            logger.error(f"Erro ao commitar alterações: {commit_error}")
-            raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
+        # Se não achou em nenhuma tabela
+        raise HTTPException(status_code=404, detail="Dispositivo not found")
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating dispositivo: {e}")
@@ -562,11 +610,16 @@ def add_option(option_type: str, value: dict = Body(...)):
         options = load_options()
         option_key = {
             'marcas': 'marcas',
+            'modelos_pc': 'modelos_pc',
             'tipos_dispositivo': 'tipos_dispositivo',
             'tipos_armazenamento': 'tipos_armazenamento',
             'quantidades_ram': 'quantidades_ram',
             'quantidades_armazenamento': 'quantidades_armazenamento',
-            'estagiarios': 'estagiarios'
+            'marcas_outros': 'marcas_outros',
+            'modelo_outros': 'modelo_outros',
+            'tipos_outros': 'tipos_outros',
+            'estagiarios': 'estagiarios',
+            'funcionando': 'funcionando'
         }.get(option_type)
         
         if not option_key:
@@ -595,11 +648,16 @@ def delete_option(option_type: str, value: str):
         options = load_options()
         option_key = {
             'marcas': 'marcas',
+            'modelos_pc': 'modelos_pc',
             'tipos_dispositivo': 'tipos_dispositivo',
             'tipos_armazenamento': 'tipos_armazenamento',
             'quantidades_ram': 'quantidades_ram',
             'quantidades_armazenamento': 'quantidades_armazenamento',
-            'estagiarios': 'estagiarios'
+            'marcas_outros': 'marcas_outros',
+            'modelo_outros': 'modelo_outros',
+            'tipos_outros': 'tipos_outros',
+            'estagiarios': 'estagiarios',
+            'funcionando': 'funcionando'
         }.get(option_type)
         
         if not option_key:

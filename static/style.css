@@ -507,17 +507,26 @@ footer p {
 }
 
 .admin-sections {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
     margin-top: 20px;
 }
 
+.admin-sectionsub {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
 .admin-section {
     background-color: white;
     padding: 20px;
+    margin: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    width: 40%;
 }
 
 .admin-section h3 {
