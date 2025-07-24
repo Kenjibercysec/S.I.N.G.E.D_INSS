@@ -400,14 +400,17 @@ def list_dispositivos(
     logger.info(f"Listing dispositivos with skip={skip}, limit={limit}")
     try:
         # Buscar dispositivos de ambas as tabelas
-        dispositivos_pc = db.query(DispositivoModel).order_by(DispositivoModel.id_tomb.desc()).all()
-        outros_dispositivos = db.query(OutroDispositivo).order_by(OutroDispositivo.id_tomb.desc()).all()
+        dispositivos_pc = db.query(DispositivoModel).order_by(DispositivoModel.data_de_an.desc().nullslast()).all()
+        outros_dispositivos = db.query(OutroDispositivo).order_by(OutroDispositivo.data_de_an.desc().nullslast()).all()
 
         # Combinar os resultados
         todos_dispositivos = dispositivos_pc + outros_dispositivos
         
-        # Ordenar por id_tomb
-        todos_dispositivos.sort(key=lambda x: x.id_tomb, reverse=True)
+        # Ordenar por data_de_an (mais recente primeiro), tratando None como mais antigo
+        todos_dispositivos.sort(
+            key=lambda x: x.data_de_an if x.data_de_an is not None else date(1900, 1, 1),
+            reverse=True
+        )
         
         # Converter para dicionário para garantir que todos os campos estejam presentes
         dispositivos_dict = []
@@ -415,7 +418,6 @@ def list_dispositivos(
             dispositivo_dict = {
                 "id_tomb": dispositivo.id_tomb,
                 "tipo_de_disp": dispositivo.tipo_de_disp,
-                # Só inclua os campos abaixo se existirem no objeto
                 **({"qnt_ram": dispositivo.qnt_ram} if hasattr(dispositivo, "qnt_ram") else {}),
                 **({"qnt_armaz": dispositivo.qnt_armaz} if hasattr(dispositivo, "qnt_armaz") else {}),
                 **({"tipo_armaz": dispositivo.tipo_armaz} if hasattr(dispositivo, "tipo_armaz") else {}),

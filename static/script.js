@@ -273,7 +273,7 @@ function displayDevices(devices) {
                         <p>Funcionando: <span class="editable" data-field="funcionando">${device.funcionando === true ? "Sim" : device.funcionando === false ? "Não" : "N/A"}</span></p>
                         <p>Local Atual do Dispositivo: <span class="editable" data-field="locat_do_disp">${device.locat_do_disp || "N/A"}</span></p>
                         <p>Descrição: <span class="editable" data-field="descricao">${device.descricao || "N/A"}</span></p>
-                        <p>Data da Análise: <span class="editable" data-field="data_de_an">${device.data_de_an || "N/A"}</span></p>
+                        <p>Data da Análise: <span class="editable" data-field="data_de_an">${formatDateBR(device.data_de_an)}</span></p>
                         <p>Estagiário: <span class="editable" data-field="estagiario">${device.estagiario || "N/A"}</span></p>
                         <div class="card-btns">
                             <button class="btn-b" onclick="toggleEditMode(${device.id_tomb})">Editar</button>
@@ -706,3 +706,14 @@ async function saveChanges(event) {
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Página carregada, modal deve estar oculto:", document.getElementById("modal-history").style.display);
 });
+
+function formatDateBR(dateStr) {
+    if (!dateStr || dateStr === "N/A") return "N/A";
+    // Aceita tanto "yyyy-mm-dd" quanto "yyyy-mm-ddTHH:MM:SS"
+    const date = new Date(dateStr);
+    if (isNaN(date)) return dateStr;
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
