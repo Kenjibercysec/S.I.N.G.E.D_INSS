@@ -119,14 +119,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const funcionando = document.getElementById('filter-funcionando').value;
             const tipo_armaz = document.getElementById('filter-tipo_armaz').value.trim();
             const qnt_ram = document.getElementById('filter-qnt_ram').value.trim();
+            const qnt_armaz = document.getElementById('filter-qnt_armaz').value.trim();
             const tipo_de_disp = document.getElementById('filter-tipo_de_disp').value.trim();
+            const estagiario = document.getElementById('filter-estagiario').value.trim();
+            const locat_do_disp = document.getElementById('filter-locat_do_disp').value.trim();
+            const descricao = document.getElementById('filter-descricao').value.trim();
+            const data_de_an = document.getElementById('filter-data_de_an').value.trim();
+
             if (id_tomb) params.id_tomb = id_tomb;
             if (marca) params.marca = marca;
             if (modelo) params.modelo = modelo;
             if (funcionando) params.funcionando = funcionando;
             if (tipo_armaz) params.tipo_armaz = tipo_armaz;
             if (qnt_ram) params.qnt_ram = qnt_ram;
+            if (qnt_armaz) params.qnt_armaz = qnt_armaz;
             if (tipo_de_disp) params.tipo_de_disp = tipo_de_disp;
+            if (estagiario) params.estagiario = estagiario;
+            if (locat_do_disp) params.locat_do_disp = locat_do_disp;
+            if (descricao) params.descricao = descricao;
+            if (data_de_an) params.data_de_an = data_de_an;
+
             // Montar query string
             const queryString = Object.keys(params).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
             let url = '/dispositivos/search/';
@@ -155,18 +167,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/static/options.json');
             const options = await response.json();
 
-            // Marca
+            // Marca (unificada)
             const marcaSelect = document.getElementById('filter-marca');
-            if (marcaSelect && options.marcas) {
+            if (marcaSelect) {
+                let marcas = [];
+                if (options.marcas) marcas = marcas.concat(options.marcas);
+                if (options.marcas_outros) marcas = marcas.concat(options.marcas_outros);
+                marcas = [...new Set(marcas)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
                 marcaSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    options.marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
+                    marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
             }
 
-            // Tipo de Dispositivo
+            // Tipo de Dispositivo (unificado)
             const tipoDispSelect = document.getElementById('filter-tipo_de_disp');
-            if (tipoDispSelect && options.tipos_dispositivo) {
+            if (tipoDispSelect) {
+                let tipos = [];
+                if (options.tipos_dispositivo) tipos = tipos.concat(options.tipos_dispositivo);
+                if (options.tipos_outros) tipos = tipos.concat(options.tipos_outros);
+                tipos = [...new Set(tipos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
                 tipoDispSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    options.tipos_dispositivo.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
+                    tipos.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
             }
 
             // Tipo de Armazenamento
@@ -181,6 +201,22 @@ document.addEventListener('DOMContentLoaded', function() {
             if (ramSelect && options.quantidades_ram) {
                 ramSelect.innerHTML = '<option value="">Qualquer</option>' +
                     options.quantidades_ram.map(ram => `<option value="${ram}">${ram} GB</option>`).join('');
+            }
+
+            // Quantidade de Armazenamento
+            const qntArmazSelect = document.getElementById('filter-qnt_armaz');
+            if (qntArmazSelect && options.quantidades_armazenamento) {
+                qntArmazSelect.innerHTML = '<option value="">Qualquer</option>' +
+                    options.quantidades_armazenamento.map(qtd => 
+                        `<option value="${qtd}">${qtd === '1000' ? '1 TB' : qtd + ' GB'}</option>`
+                    ).join('');
+            }
+
+            // Estagiário
+            const estagiarioSelect = document.getElementById('filter-estagiario');
+            if (estagiarioSelect && options.estagiarios) {
+                estagiarioSelect.innerHTML = '<option value="">Qualquer</option>' +
+                    options.estagiarios.map(est => `<option value="${est}">${est}</option>`).join('');
             }
         } catch (e) {
             console.error('Erro ao carregar opções para filtros avançados:', e);
