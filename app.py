@@ -295,9 +295,16 @@ def search_dispositivos(
             if modelo:
                 filtros_pc.append(DispositivoModel.modelo.ilike(f"%{modelo}%"))
                 filtros_outros.append(OutroDispositivo.modelo.ilike(f"%{modelo}%"))
-            if funcionando:
-                filtros_pc.append(DispositivoModel.funcionando.cast(String).ilike(f"%{funcionando}%"))
-                filtros_outros.append(OutroDispositivo.funcionando.cast(String).ilike(f"%{funcionando}%"))
+            if funcionando is not None and funcionando != "":
+                funcionando_bool = None
+                if funcionando.lower() == "true":
+                    funcionando_bool = True
+                if funcionando.lower() == "false":
+                    funcionando_bool = False
+                if funcionando_bool is not None:
+                    # Adiciona o filtro de funcionamento apenas se o valor for válido
+                    filtros_pc.append(DispositivoModel.funcionando == funcionando_bool)
+                    filtros_outros.append(OutroDispositivo.funcionando == funcionando_bool)
             if tipo_armaz:
                 filtros_pc.append(DispositivoModel.tipo_armaz.ilike(f"%{tipo_armaz}%"))
                 
