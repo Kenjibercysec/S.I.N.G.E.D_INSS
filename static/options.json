@@ -8,10 +8,7 @@
     ],
     "tipos_dispositivo": [
         "Desktop",
-        "Notebook",
-        "All-in-One",
-        "Tablet",
-        "Smartphone"
+        "Notebook"
     ],
     "tipos_armazenamento": [
         "NAN",

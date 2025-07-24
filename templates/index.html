@@ -27,20 +27,20 @@
                 <div class="advanced-filter-dropdown" style="position: relative; display: inline-block;">
                     <button id="advanced-filter-btn" type="button" class="filter-button">Filtros▼</button>
                     <div id="advanced-filter-content" style="display: none; position: absolute; background: #fff; border: 1px solid #ccc; z-index: 10; padding: 16px; min-width: 250px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <label style="display:block; margin-bottom: 6px;">Nº de tombamento: <input type="text" id="filter-id_tomb" class="filter-input"></label>
-                        <label style="display:block; margin-bottom: 6px;">Marca: <select id="filter-marca" class="filter-input"></select></label>
-                        <label style="display:block; margin-bottom: 6px;">Modelo: <input type="text" id="filter-modelo" class="filter-input"></label>
-                        <label style="display:block; margin-bottom: 6px;">Funcionando: 
-                            <select id="filter-funcionando" class="filter-input">
-                                <option value="">Qualquer</option>
-                                <option value="true">Sim</option>
-                                <option value="false">Não</option>
-                            </select>
-                        </label>
-                        <label style="display:block; margin-bottom: 6px;">Tipo de Armazenamento: <select id="filter-tipo_armaz" class="filter-input"></select></label>
-                        <label style="display:block; margin-bottom: 6px;">Memória RAM: <select id="filter-qnt_ram" class="filter-input"></select></label>
-                        <label style="display:block; margin-bottom: 6px;">Tipo de Dispositivo: <select id="filter-tipo_de_disp" class="filter-input"></select></label>
-                        <button id="apply-advanced-filter" type="button" class="button" style="margin-top: 8px;">Filtrar</button>
+                    </label>
+                    <label style="display:block; margin-bottom: 6px;">Tipo de Dispositivo: <select id="filter-tipo_de_disp" class="form-select"></select></label>
+                    <label style="display:block; margin-bottom: 6px;">Marca: <select id="filter-marca" class="form-select"></select></label>
+                    <label style="display:block; margin-bottom: 6px;">Funcionando: 
+                        <select id="filter-funcionando" class="form-select">
+                            <option value="">Qualquer</option>
+                            <option value="true">Sim</option>
+                            <option value="false">Não</option>
+                        </select>
+                        <label style="display:block; margin-bottom: 6px;">Tipo de Armazenamento: <select id="filter-tipo_armaz" class="form-select"></select></label>
+                        <label style="display:block; margin-bottom: 6px;">Quantidade de Armazenamento: <select id="filter-qnt_armaz" class="form-select"></select></label>
+                        <label style="display:block; margin-bottom: 6px;">Memória RAM: <select id="filter-qnt_ram" class="form-select"></select></label>
+                        <label style="display:block; margin-bottom: 6px;">Estagiário: <select id="filter-estagiario" class="form-select"></select></label>
+                                               <button id="apply-advanced-filter" type="button" class="button"  style="margin-top: 8px;">Filtrar</button>
                     </div>
                 </div>
                 <input type="text" placeholder="Pesquisar" class="search-input" id="search-bar">

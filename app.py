@@ -48,7 +48,7 @@ def load_options():
         if not os.path.exists(OPTIONS_FILE):
             default_options = {
                 'marcas': ['Positivo', 'Lenovo', 'Daten', 'Dell', 'Acer'],
-                'tipos_dispositivo': ['Desktop', 'Notebook', 'All-in-One', 'Tablet', 'Smartphone'],
+                'tipos_dispositivo': ['Desktop', 'Notebook'],
                 'tipos_armazenamento': ['NAN', 'HDD', 'SSD'],
                 'quantidades_ram': ['0', '1', '2', '4', '6', '8', '12', '16'],
                 'quantidades_armazenamento': ['0', '120', '128', '160', '240', '256', '320', '500', '1000']
@@ -257,7 +257,12 @@ def search_dispositivos(
     funcionando: str = Query(None),
     tipo_armaz: str = Query(None),
     qnt_ram: str = Query(None),
+    qnt_armaz: str = Query(None),
     tipo_de_disp: str = Query(None),
+    estagiario: str = Query(None),
+    locat_do_disp: str = Query(None),
+    descricao: str = Query(None),
+    data_de_an: str = Query(None),
 ):
     logger.info(f"Searching dispositivos with advanced filters")
     try:
@@ -302,9 +307,24 @@ def search_dispositivos(
             if qnt_ram:
                 filtros_pc.append(DispositivoModel.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
                 filtros_outros.append(OutroDispositivo.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
+            if qnt_armaz:
+                filtros_pc.append(DispositivoModel.qnt_armaz.cast(String).ilike(f"%{qnt_armaz}%"))
+                filtros_outros.append(OutroDispositivo.qnt_armaz.cast(String).ilike(f"%{qnt_armaz}%"))
             if tipo_de_disp:
                 filtros_pc.append(DispositivoModel.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
                 filtros_outros.append(OutroDispositivo.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
+            if estagiario:
+                filtros_pc.append(DispositivoModel.estagiario.ilike(f"%{estagiario}%"))
+                filtros_outros.append(OutroDispositivo.estagiario.ilike(f"%{estagiario}%"))
+            if locat_do_disp:
+                filtros_pc.append(DispositivoModel.locat_do_disp.ilike(f"%{locat_do_disp}%"))
+                filtros_outros.append(OutroDispositivo.locat_do_disp.ilike(f"%{locat_do_disp}%"))
+            if descricao:
+                filtros_pc.append(DispositivoModel.descricao.ilike(f"%{descricao}%"))
+                filtros_outros.append(OutroDispositivo.descricao.ilike(f"%{descricao}%"))
+            if data_de_an:
+                filtros_pc.append(DispositivoModel.data_de_an.cast(String).ilike(f"%{data_de_an}%"))
+                filtros_outros.append(OutroDispositivo.data_de_an.cast(String).ilike(f"%{data_de_an}%"))
         if filtros_pc:
             dispositivos_pc = db.query(DispositivoModel).filter(and_(*filtros_pc)).all()
         else:
