@@ -284,9 +284,6 @@ def search_dispositivos(
                 OutroDispositivo.marca.ilike(f"%{q}%"),
                 OutroDispositivo.modelo.ilike(f"%{q}%"),
                 OutroDispositivo.funcionando.cast(String).ilike(f"%{q}%"),
-                OutroDispositivo.tipo_armaz.ilike(f"%{q}%"),
-                OutroDispositivo.qnt_ram.cast(String).ilike(f"%{q}%"),
-                OutroDispositivo.tipo_de_disp.ilike(f"%{q}%")
             ))
         else:
             if id_tomb:
@@ -303,13 +300,13 @@ def search_dispositivos(
                 filtros_outros.append(OutroDispositivo.funcionando.cast(String).ilike(f"%{funcionando}%"))
             if tipo_armaz:
                 filtros_pc.append(DispositivoModel.tipo_armaz.ilike(f"%{tipo_armaz}%"))
-                filtros_outros.append(OutroDispositivo.tipo_armaz.ilike(f"%{tipo_armaz}%"))
+                
             if qnt_ram:
                 filtros_pc.append(DispositivoModel.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
-                filtros_outros.append(OutroDispositivo.qnt_ram.cast(String).ilike(f"%{qnt_ram}%"))
+                
             if qnt_armaz:
                 filtros_pc.append(DispositivoModel.qnt_armaz.cast(String).ilike(f"%{qnt_armaz}%"))
-                filtros_outros.append(OutroDispositivo.qnt_armaz.cast(String).ilike(f"%{qnt_armaz}%"))
+                
             if tipo_de_disp:
                 filtros_pc.append(DispositivoModel.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
                 filtros_outros.append(OutroDispositivo.tipo_de_disp.ilike(f"%{tipo_de_disp}%"))
@@ -329,10 +326,14 @@ def search_dispositivos(
             dispositivos_pc = db.query(DispositivoModel).filter(and_(*filtros_pc)).all()
         else:
             dispositivos_pc = db.query(DispositivoModel).all()
-        if filtros_outros:
-            outros_dispositivos = db.query(OutroDispositivo).filter(and_(*filtros_outros)).all()
+        # Se algum filtro de computador foi usado, não busque outros dispositivos
+        if tipo_armaz or qnt_ram or qnt_armaz:
+            outros_dispositivos = []
         else:
-            outros_dispositivos = db.query(OutroDispositivo).all()
+            if filtros_outros:
+                outros_dispositivos = db.query(OutroDispositivo).filter(and_(*filtros_outros)).all()
+            else:
+                outros_dispositivos = db.query(OutroDispositivo).all()
         dispositivos = dispositivos_pc + outros_dispositivos
         if not dispositivos:
             logger.warning(f"No dispositivos found for advanced filters")
@@ -351,6 +352,12 @@ def search_dispositivos(
                 "descricao": dispositivo.descricao,
                 "estagiario": dispositivo.estagiario
             }
+            # Se for DispositivoModel (computador), inclua os campos extras
+            if hasattr(dispositivo, "qnt_ram"):
+                dispositivo_dict["qnt_ram"] = dispositivo.qnt_ram
+                dispositivo_dict["qnt_armaz"] = dispositivo.qnt_armaz
+                dispositivo_dict["tipo_armaz"] = dispositivo.tipo_armaz
+            # Se não for, não inclui esses campos
             dispositivos_dict.append(dispositivo_dict)
         return {
             "message": "Dispositivos found successfully",
