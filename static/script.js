@@ -488,7 +488,7 @@ async function toggleEditMode(id_tomb) {
             const field = span.dataset.field;
             // Só permite editar RAM/armazenamento se for computador
             if (
-                (!isComputador && (field === 'qnt_ram' || field === 'tipo_armaz'))
+                (!isComputador && (field === 'qnt_ram' || field === 'tipo_armaz' || field === 'qnt_armaz'))
             ) {
                 return; // pula esses campos para não exibir input
             }

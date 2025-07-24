@@ -48,7 +48,7 @@ def load_options():
         if not os.path.exists(OPTIONS_FILE):
             default_options = {
                 'marcas': ['Positivo', 'Lenovo', 'Daten', 'Dell', 'Acer'],
-                'tipos_dispositivo': ['Desktop', 'Notebook', 'All-in-One', 'Tablet', 'Smartphone'],
+                'tipos_dispositivo': ['Desktop', 'Notebook'],
                 'tipos_armazenamento': ['NAN', 'HDD', 'SSD'],
                 'quantidades_ram': ['0', '1', '2', '4', '6', '8', '12', '16'],
                 'quantidades_armazenamento': ['0', '120', '128', '160', '240', '256', '320', '500', '1000']
