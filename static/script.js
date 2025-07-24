@@ -113,31 +113,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (applyAdvancedFilter) {
         applyAdvancedFilter.addEventListener('click', function() {
             const params = {};
-            const id_tomb = document.getElementById('filter-id_tomb').value.trim();
+            const tipo_de_disp = document.getElementById('filter-tipo_de_disp').value.trim();
             const marca = document.getElementById('filter-marca').value.trim();
-            const modelo = document.getElementById('filter-modelo').value.trim();
             const funcionando = document.getElementById('filter-funcionando').value;
             const tipo_armaz = document.getElementById('filter-tipo_armaz').value.trim();
             const qnt_ram = document.getElementById('filter-qnt_ram').value.trim();
             const qnt_armaz = document.getElementById('filter-qnt_armaz').value.trim();
-            const tipo_de_disp = document.getElementById('filter-tipo_de_disp').value.trim();
             const estagiario = document.getElementById('filter-estagiario').value.trim();
-            const locat_do_disp = document.getElementById('filter-locat_do_disp').value.trim();
-            const descricao = document.getElementById('filter-descricao').value.trim();
-            const data_de_an = document.getElementById('filter-data_de_an').value.trim();
 
-            if (id_tomb) params.id_tomb = id_tomb;
+            if (tipo_de_disp) params.tipo_de_disp = tipo_de_disp;
             if (marca) params.marca = marca;
-            if (modelo) params.modelo = modelo;
             if (funcionando) params.funcionando = funcionando;
             if (tipo_armaz) params.tipo_armaz = tipo_armaz;
             if (qnt_ram) params.qnt_ram = qnt_ram;
             if (qnt_armaz) params.qnt_armaz = qnt_armaz;
-            if (tipo_de_disp) params.tipo_de_disp = tipo_de_disp;
-            if (estagiario) params.estagiario = estagiario;
-            if (locat_do_disp) params.locat_do_disp = locat_do_disp;
-            if (descricao) params.descricao = descricao;
-            if (data_de_an) params.data_de_an = data_de_an;
+            if (estagiario) params.estagiario = estagiario; 
 
             // Montar query string
             const queryString = Object.keys(params).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
