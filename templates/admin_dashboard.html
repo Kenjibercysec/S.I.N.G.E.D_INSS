@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SINGED INSS - Painel Administrativo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -17,7 +17,10 @@
             <h2 style="color: #0047a5;">Painel Administrativo</h2>
             
             <div class="admin-sections">
+                
+                <!-- Seção Computadores -->
                 <h2 style="color: #0047a5; margin-top: 2rem;">Gerenciar Opções - Computadores</h2>
+                <div class="admin-sectionsub">    
                 <div class="admin-section">
                     <h3>Gerenciar Marcas</h3>
                     <div class="field-management">
@@ -37,6 +40,29 @@
                         <div class="add-value">
                             <input type="text" id="nova-marca" placeholder="Nova marca">
                             <button class="button" onclick="addValue('marcas')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Modelos</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Modelos Atuais:</h4>
+                            <ul id="modelos-pc-list">
+                                {% for modelo in modelos_pc %}
+                                <li>
+                                    {{ modelo }}
+                                    <button class="btn-delete" onclick="deleteValue('modelos_pc', '{{ modelo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-modelo-pc" placeholder="Novo modelo">
+                            <button class="button" onclick="addValue('modelos_pc')">Adicionar</button>
                         </div>
                     </div>
                 </div>
@@ -132,8 +158,11 @@
                         </div>
                     </div>
                 </div>
-
-                <h2 style="color: #0047a5; margin-top: 2rem;">Gerenciar Opções - Outros Dispositivos</h2>
+            </div>    
+            
+            <!-- Seção Outros Dispositivos -->
+            <h2 style="color: #0047a5; margin-top: 2rem;">Gerenciar Opções - Outros Dispositivos</h2>
+            <div class="admin-sectionsub">
                 <div class="admin-section">
                     <h3>Gerenciar Marcas</h3>
                     <div class="field-management">
@@ -153,6 +182,29 @@
                         <div class="add-value">
                             <input type="text" id="nova-marca-outros" placeholder="Nova marca">
                             <button class="button" onclick="addValue('marcas_outros')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Gerenciar Modelos</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Modelos Atuais:</h4>
+                            <ul id="modelos-outros-list">
+                                {% for modelo in modelo_outros %}
+                                <li>
+                                    {{ modelo }}
+                                    <button class="btn-delete" onclick="deleteValue('modelo_outros', '{{ modelo }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-modelo-outros" placeholder="Novo modelo">
+                            <button class="button" onclick="addValue('modelo_outros')">Adicionar</button>
                         </div>
                     </div>
                 </div>
@@ -179,13 +231,17 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
+            <!-- Seção Campos Globais -->
+            <h2 style="color: #0047a5; margin-top: 2rem;">Campos Globais</h2>
+            <div class="admin-sectionsub">
                 <div class="admin-section">
                     <h3>Gerenciar Estagiários</h3>
                     <div class="field-management">
                         <div class="current-values">
                             <h4>Estagiários Atuais:</h4>
-                                <ul id="estagiarios-list">
+                            <ul id="estagiarios-list">
                                 {% for estagiario in estagiarios %}
                                 <li>
                                     {{ estagiario }}
@@ -202,7 +258,30 @@
                         </div>
                     </div>
                 </div>
+                <div class="admin-section">
+                    <h3>Gerenciar Opções de Funcionamento</h3>
+                    <div class="field-management">
+                        <div class="current-values">
+                            <h4>Opções Atuais:</h4>
+                            <ul id="funcionando-list">
+                                {% for func in funcionando %}
+                                <li>
+                                    {{ func }}
+                                    <button class="btn-delete" onclick="deleteValue('funcionando', '{{ func }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="add-value">
+                            <input type="text" id="novo-funcionando" placeholder="Nova opção (ex: Sim, Não)">
+                            <button class="button" onclick="addValue('funcionando')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
         </div>
 
         <footer>
@@ -219,6 +298,9 @@
                 case 'marcas':
                     inputId = 'nova-marca';
                     break;
+                case 'modelos_pc':
+                    inputId = 'novo-modelo-pc';
+                    break;
                 case 'tipos_dispositivo':
                     inputId = 'novo-tipo';
                     break;
@@ -234,13 +316,19 @@
                 case 'marcas_outros':
                     inputId = 'nova-marca-outros';
                     break;
+                case 'modelo_outros':
+                    inputId = 'novo-modelo-outros';
+                    break;
                 case 'tipos_outros':
                     inputId = 'novo-tipo-outros';
                     break;
                 case 'estagiarios':
                     inputId = 'novo-estagiario';
                     break;
-                    default:
+                case 'funcionando':
+                    inputId = 'novo-funcionando';
+                    break;
+                default:
                     alert('Tipo de campo inválido');
                     return;
             }
@@ -263,16 +351,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    const list = document.getElementById(`${field.split('_').pop()}-list`);
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        ${value}${field.includes('quantidades') ? ' GB' : ''}
-                        <button class="btn-delete" onclick="deleteValue('${field}', '${value}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    `;
-                    list.appendChild(li);
-                    document.getElementById(inputId).value = '';
+                    location.reload();
                 } else {
                     alert(data.detail || 'Erro ao adicionar valor');
                 }
@@ -293,14 +372,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    const list = document.getElementById(`${field.split('_').pop()}-list`);
-                    const items = list.getElementsByTagName('li');
-                    for (let item of items) {
-                        if (item.textContent.trim() === value + (field.includes('quantidades') ? ' GB' : '')) {
-                            item.remove();
-                            break;
-                        }
-                    }
+                    location.reload();
                 } else {
                     alert(data.detail || 'Erro ao excluir valor');
                 }
@@ -311,4 +383,4 @@
         }
     </script>
 </body>
-</html> 
+</html>

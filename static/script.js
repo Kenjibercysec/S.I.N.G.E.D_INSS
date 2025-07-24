@@ -717,3 +717,63 @@ function formatDateBR(dateStr) {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 }
+
+async function loadAdminOptions() {
+    const options = await fetch('/admin/options').then(r => r.json());
+
+    // Computadores
+    renderOptionList('admin-marcas', options.marcas, 'marcas');
+    renderOptionList('admin-modelos-pc', options.modelos_pc, 'modelos_pc');
+    renderOptionList('admin-tipos-dispositivo', options.tipos_dispositivo, 'tipos_dispositivo');
+    renderOptionList('admin-tipos-armazenamento', options.tipos_armazenamento, 'tipos_armazenamento');
+    renderOptionList('admin-quantidades-ram', options.quantidades_ram, 'quantidades_ram');
+    renderOptionList('admin-quantidades-armaz', options.quantidades_armazenamento, 'quantidades_armazenamento');
+
+    // Outros Dispositivos
+    renderOptionList('admin-marcas-outros', options.marcas_outros, 'marcas_outros');
+    renderOptionList('admin-modelos-outros', options.modelo_outros, 'modelo_outros');
+    renderOptionList('admin-tipos-outros', options.tipos_outros, 'tipos_outros');
+
+    // Globais
+    renderOptionList('admin-estagiarios', options.estagiarios, 'estagiarios');
+    renderOptionList('admin-funcionando', options.funcionando, 'funcionando');
+}
+
+function renderOptionList(containerId, list, optionType) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = (list || []).map(item => `
+        <span>${item} <button onclick="deleteOption('${optionType}', '${item}')">x</button></span>
+    `).join(' ');
+}
+
+async function addOption(optionType) {
+    const inputId = {
+        'marcas': 'input-marca',
+        'modelos_pc': 'input-modelo-pc',
+        'tipos_dispositivo': 'input-tipo-dispositivo',
+        'tipos_armazenamento': 'input-tipo-armaz',
+        'quantidades_ram': 'input-ram',
+        'quantidades_armazenamento': 'input-armaz',
+        'marcas_outros': 'input-marca-outros',
+        'modelo_outros': 'input-modelo-outros',
+        'tipos_outros': 'input-tipo-outros',
+        'estagiarios': 'input-estagiario',
+        'funcionando': 'input-funcionando'
+    }[optionType];
+    const value = document.getElementById(inputId).value.trim();
+    if (!value) return alert('Digite um valor!');
+    await fetch(`/admin/options/${optionType}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({value})
+    });
+    loadAdminOptions();
+}
+
+async function deleteOption(optionType, value) {
+    await fetch(`/admin/options/${optionType}/${encodeURIComponent(value)}`, {method: 'DELETE'});
+    loadAdminOptions();
+}
+
+document.addEventListener('DOMContentLoaded', loadAdminOptions);

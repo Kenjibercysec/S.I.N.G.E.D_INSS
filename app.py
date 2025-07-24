@@ -150,13 +150,16 @@ def admin_dashboard(request: Request, logged_in: str = Cookie(None)):
         {
             "request": request,
             "marcas": options.get('marcas', []),
+            "modelos_pc": options.get('modelos_pc', []),
             "tipos": options.get('tipos_dispositivo', []),
             "armazenamento": options.get('tipos_armazenamento', []),
             "quantidades_ram": options.get('quantidades_ram', []),
             "quantidades_armazenamento": options.get('quantidades_armazenamento', []),
             "marcas_outros": options.get('marcas_outros', []),
+            "modelo_outros": options.get('modelo_outros', []),
             "tipos_outros": options.get('tipos_outros', []),
-            "estagiarios": options.get('estagiarios', [])
+            "estagiarios": options.get('estagiarios', []),
+            "funcionando": options.get('funcionando', [])
         }
     )
 
@@ -578,11 +581,16 @@ def add_option(option_type: str, value: dict = Body(...)):
         options = load_options()
         option_key = {
             'marcas': 'marcas',
+            'modelos_pc': 'modelos_pc',
             'tipos_dispositivo': 'tipos_dispositivo',
             'tipos_armazenamento': 'tipos_armazenamento',
             'quantidades_ram': 'quantidades_ram',
             'quantidades_armazenamento': 'quantidades_armazenamento',
-            'estagiarios': 'estagiarios'
+            'marcas_outros': 'marcas_outros',
+            'modelo_outros': 'modelo_outros',
+            'tipos_outros': 'tipos_outros',
+            'estagiarios': 'estagiarios',
+            'funcionando': 'funcionando'
         }.get(option_type)
         
         if not option_key:
@@ -611,11 +619,16 @@ def delete_option(option_type: str, value: str):
         options = load_options()
         option_key = {
             'marcas': 'marcas',
+            'modelos_pc': 'modelos_pc',
             'tipos_dispositivo': 'tipos_dispositivo',
             'tipos_armazenamento': 'tipos_armazenamento',
             'quantidades_ram': 'quantidades_ram',
             'quantidades_armazenamento': 'quantidades_armazenamento',
-            'estagiarios': 'estagiarios'
+            'marcas_outros': 'marcas_outros',
+            'modelo_outros': 'modelo_outros',
+            'tipos_outros': 'tipos_outros',
+            'estagiarios': 'estagiarios',
+            'funcionando': 'funcionando'
         }.get(option_type)
         
         if not option_key:

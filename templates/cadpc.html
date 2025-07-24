@@ -20,62 +20,41 @@
 
         <div class="form-section">
             <form id="cadastroForm" class="form-group">
-                <input type="text" id="id_tomb" name="id_tomb" placeholder="Nº de tombamento" class="form-input" required>
+                <select id="tipo_de_disp" name="tipo_de_disp" class="form-select" required>
+                    <option value="" disabled selected>Tipo de Dispositivo</option>
+                </select>
+                <select id="marca" name="marca" class="form-select" required>
+                    <option value="" disabled selected>Marca</option>    
+                </select>
+                <select id="modelo" name="modelo" class="form-select" required>
+                    <option value="" disabled selected>Modelo</option>    
+                </select>
                 <select id="qnt_ram" name="qnt_ram" class="form-select" required>
                     <option value="" disabled selected>Quantidade de memória RAM</option>
-                    <option value="0">Sem memória RAM</option>
-                    <option value="1">1 GB</option>
-                    <option value="2">2 GB</option>
-                    <option value="4">4 GB</option>
-                    <option value="6">6 GB</option>
-                    <option value="8">8 GB</option>
-                    <option value="12">12 GB</option>
-                    <option value="16">16 GB</option>
                 </select>
                 <select id="qnt_armaz" name="qnt_armaz" class="form-select" required>
                     <option value="" disabled selected>Quantidade de Armazenamento</option>
-                    <option value="0">Sem Armazenamento</option>
-                    <option value="120">120 GB</option>
-                    <option value="128">128 GB</option>
-                    <option value="160">160 GB</option>
-                    <option value="240">240 GB</option>
-                    <option value="256">256 GB</option>
-                    <option value="320">320 GB</option>
-                    <option value="480">480 GB</option>
-                    <option value="500">500 GB</option>
-                    <option value="1000">1 TB</option>
+                    
                 </select>
                 <select id="tipo_armaz" name="tipo_armaz" class="form-select" required>
                     <option value="" disabled selected>Tipo de Armazenamento</option>
-                    <option value="NAN">Sem Armazenamento</option>
-                    <option value="HDD">HDD</option>
-                    <option value="SSD">SSD</option>
-                </select>
-                <select id="marca" name="marca" class="form-select" required>
-                    <option value="" disabled selected>Marca</option>
-                    <option value="positivo">Positivo</option>
-                    <option value="Lenovo">Lenovo</option>
-                    <option value="daten">Daten</option>
-                    <option value="dell">Dell</option>
-                    <option value="outro">Outros</option>
+                    
                 </select>
                 <select id="funcionando" name="funcionando" class="form-select" required>
                     <option value="" disabled selected>Funcionando?</option>
                     <option value="true">Sim</option>
                     <option value="false">Não</option>
                 </select>
+                <select id="estagiario" name="estagiario" class="form-select" required>
+                    <option value="" disabled selected>Estagiário</option>
+                </select>
+                <input type="text" id="id_tomb" name="id_tomb" placeholder="Nº de tombamento" class="form-input" required>
                 <input type="text" id="locat_do_disp" name="locat_do_disp" placeholder="Local Atual do Dispositivo" class="form-input" required>
                 <textarea id="descricao" name="descricao" placeholder="Descrição" class="form-input desc"></textarea>
                 <div class="date_div">
                     <p>Data da Análise:</p>
                     <input type="date" id="data_de_an" name="data_de_an" class="form-input" required>
                 </div>
-                <select id="estagiario" name="estagiario" class="form-select" required>
-                    <option value="" disabled selected>Estagiário</option>
-                    <option value="João Pedro Jacó">João Pedro Jacó</option>
-                    <option value="Silas Kenji">Silas Kenji</option>
-                    <option value="Vitor Hugo">Vitor Hugo</option>
-                </select>
                 <button type="submit" class="button">Cadastrar</button>
             </form>
         </div>
@@ -88,12 +67,31 @@
             const response = await fetch('/admin/options');
             const options = await response.json();
             
+            // Preencher tipos de dispositivos
+            const tipoDispSelect = document.getElementById('tipo_de_disp');
+            tipoDispSelect.innerHTML = `
+                <option value="">Tipo de Dispositivo</option>
+                ${options.tipos_dispositivo.map(tipo => `
+                    <option value="${tipo}">${tipo}</option>
+                `).join('')}
+            `;
+            
+
             // Preencher marcas
             const marcaSelect = document.getElementById('marca');
             marcaSelect.innerHTML = `
                 <option value="">Selecione a marca</option>
                 ${options.marcas.map(marca => `
                     <option value="${marca}">${marca}</option>
+                `).join('')}
+            `;
+
+            // Preencher modelos
+            const modeloSelect = document.getElementById('modelo');
+            modeloSelect.innerHTML = `
+                <option value="">Selecione o Modelo</option>
+                ${options.modelos_pc.map(modelo => `
+                    <option value="${modelo}">${modelo}</option>
                 `).join('')}
             `;
             
@@ -124,11 +122,21 @@
                 `).join('')}
             `;
             
+            // Preencher estagiários
             const estagiarioSelect = document.getElementById('estagiario');
             estagiarioSelect.innerHTML = `
                 <option value="">Estagiário</option>
                 ${options.estagiarios.map(estagiario => `
                     <option value="${estagiario}">${estagiario}</option>
+                `).join('')}
+            `;
+
+              // Preencher funcionando
+                const funcionandoSelect = document.getElementById('funcionando');
+            funcionandoSelect.innerHTML = `
+                <option value="">Estado de funcionamento</option>
+                ${options.funcionando.map(funcionando => `
+                    <option value="${funcionando}">${funcionando}</option>
                 `).join('')}
             `;
         } catch (error) {
