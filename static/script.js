@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const params = {};
             const tipo_de_disp = document.getElementById('filter-tipo_de_disp').value.trim();
             const marca = document.getElementById('filter-marca').value.trim();
+            const modelo = document.getElementById('filter-modelo').value.trim();
             const funcionando = document.getElementById('filter-funcionando').value;
             const tipo_armaz = document.getElementById('filter-tipo_armaz').value.trim();
             const qnt_ram = document.getElementById('filter-qnt_ram').value.trim();
@@ -123,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (tipo_de_disp) params.tipo_de_disp = tipo_de_disp;
             if (marca) params.marca = marca;
+            if (modelo) params.modelo = modelo;
             if (funcionando) params.funcionando = funcionando;
             if (tipo_armaz) params.tipo_armaz = tipo_armaz;
             if (qnt_ram) params.qnt_ram = qnt_ram;
@@ -166,6 +168,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 marcas = [...new Set(marcas)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
                 marcaSelect.innerHTML = '<option value="">Qualquer</option>' +
                     marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
+            }
+
+            // Modelos (unificado)
+            const modeloSelect = document.getElementById('filter-modelo');
+            if (modeloSelect) {
+                let modelos = [];
+                if (options.modelos_pc) modelos = modelos.concat(options.modelos_pc);
+                if (options.modelo_outros) modelos = modelos.concat(options.modelo_outros);
+                modelos = [...new Set(modelos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                modeloSelect.innerHTML = '<option value="">Qualquer</option>' +
+                    modelos.map(modelo => `<option value="${modelo}">${modelo}</option>`).join('');
             }
 
             // Tipo de Dispositivo (unificado)
