@@ -115,12 +115,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const params = {};
             const tipo_de_disp = document.getElementById('filter-tipo_de_disp').value.trim();
             const marca = document.getElementById('filter-marca').value.trim();
+            const modelo = document.getElementById('filter-modelo').value.trim();
             const funcionando = document.getElementById('filter-funcionando').value;
             const tipo_armaz = document.getElementById('filter-tipo_armaz').value.trim();
             const qnt_ram = document.getElementById('filter-qnt_ram').value.trim();
             const qnt_armaz = document.getElementById('filter-qnt_armaz').value.trim();
             const estagiario = document.getElementById('filter-estagiario').value.trim();
 
+            if (modelo) params.modelo = modelo;
             if (tipo_de_disp) params.tipo_de_disp = tipo_de_disp;
             if (marca) params.marca = marca;
             if (funcionando) params.funcionando = funcionando;
@@ -168,6 +170,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
             }
 
+            const modeloSelect = document.getElementById('filter-modelo');
+            if(modeloSelect) {
+                let modelos = [];
+                if (options.modelos_pc) modelos = modelos.concat(options.modelos_pc);
+                if (options.modelos_outros) modelos = modelos.concat(options.modelos_outros);
+                modelos = [...new Set(modelos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                modeloSelect.innerHTML = '<option value="">Qualquer</option>' + 
+                    modelos.map(modelo => `<option value="${modelo}">${modelo}</option>`).join('');
+            }
             // Tipo de Dispositivo (unificado)
             const tipoDispSelect = document.getElementById('filter-tipo_de_disp');
             if (tipoDispSelect) {
@@ -451,66 +462,89 @@ async function loadOptions() {
     }
 }
 
+// function getAdvancedFilterParams() {
+//     const params = {};
+//     const tipo_de_dispEl = document.getElementById('filter-tipo_de_disp');
+//     const marcaEl = document.getElementById('filter-marca');
+//     const funcionandoEl = document.getElementById('filter-funcionando');
+//     const tipo_armazEl = document.getElementById('filter-tipo_armaz');
+//     const qnt_ramEl = document.getElementById('filter-qnt_ram');
+//     const qnt_armazEl = document.getElementById('filter-qnt_armaz');
+//     const estagiarioEl = document.getElementById('filter-estagiario');
+
+//     if (tipo_de_dispEl && tipo_de_dispEl.value.trim()) {
+//         params.tipo_de_disp = tipo_de_dispEl.value.trim();
+//     }
+//     if (marcaEl && marcaEl.value.trim()) {
+//         params.marca = marcaEl.value.trim();
+//     }
+//     if (funcionandoEl && funcionandoEl.value) {
+//         params.funcionando = funcionandoEl.value;
+//     }
+//     if (tipo_armazEl && tipo_armazEl.value.trim()) {
+//         params.tipo_armaz = tipo_armazEl.value.trim();
+//     }
+//     if (qnt_ramEl && qnt_ramEl.value.trim()) {
+//         params.qnt_ram = qnt_ramEl.value.trim();
+//     }
+//     if (qnt_armazEl && qnt_armazEl.value.trim()) {
+//         params.qnt_armaz = qnt_armazEl.value.trim();
+//     }
+//     if (estagiarioEl && estagiarioEl.value.trim()) {
+//         params.estagiario = estagiarioEl.value.trim();
+//     }
+
+//     return params;
+// }
 async function toggleEditMode(id_tomb) {
     const caract = document.getElementById(`caract-${id_tomb}`);
     const editables = caract.querySelectorAll('.editable');
     const editButton = caract.querySelector('.btn-b');
 
-    // Remove existing listeners to avoid duplicates
     editButton.removeEventListener('click', saveChanges);
-    editButton.onclick = null; // Clear existing onclick if any
+    editButton.onclick = null;
 
-    // Descobre o tipo do dispositivo
     const tipoText = caract.parentElement.querySelector('.btn-info-box p').textContent || "";
     const tipo = tipoText.replace("Tipo de dispositivo:", "").trim().toLowerCase();
     const isComputador = ["computador", "desktop", "notebook", "all-in-one"].some(t => tipo.includes(t));
 
     if (editButton.textContent === 'Editar') {
-        // Carregar opções
         const options = await loadOptions();
         if (!options) {
             alert('Erro ao carregar opções. Por favor, tente novamente.');
             return;
         }
 
-        // Entrar no modo de edição
         editables.forEach(span => {
             const field = span.dataset.field;
-            // Só permite editar RAM/armazenamento se for computador
-            if (
-                (!isComputador && (field === 'qnt_ram' || field === 'tipo_armaz' || field === 'qnt_armaz'))
-            ) {
-                return; // pula esses campos para não exibir input
-            }
-
             const currentValue = span.textContent.trim();
             let inputElement;
 
-            if (field === 'funcionando') {
+            if (field === 'modelo') {
                 inputElement = document.createElement('select');
+                const modelos = isComputador ? options.modelos_pc : options.modelo_outros;
                 inputElement.innerHTML = `
-                    <option value="true" ${currentValue === 'Sim' ? 'selected' : ''}>Sim</option>
-                    <option value="false" ${currentValue === 'Não' ? 'selected' : ''}>Não</option>
+                    <option value="">Selecione o modelo</option>
+                    ${modelos.map(modelo => `
+                        <option value="${modelo}" ${currentValue.toLowerCase() === modelo.toLowerCase() ? 'selected' : ''}>${modelo}</option>
+                    `).join('')}
                 `;
-            } else if (field === 'data_de_an') {
-                inputElement = document.createElement('input');
-                inputElement.type = 'date';
-                if (currentValue && currentValue !== 'N/A') {
-                    const parts = currentValue.split('/');
-                    if (parts.length === 3) {
-                        inputElement.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    } else {
-                        inputElement.value = currentValue;
-                    }
-                } else {
-                    inputElement.value = '';
-                }
             } else if (field === 'marca') {
                 inputElement = document.createElement('select');
+                const marcas = isComputador ? options.marcas : options.marcas_outros;
                 inputElement.innerHTML = `
                     <option value="">Selecione a marca</option>
-                    ${options.marcas.map(marca => `
+                    ${marcas.map(marca => `
                         <option value="${marca}" ${currentValue.toLowerCase() === marca.toLowerCase() ? 'selected' : ''}>${marca}</option>
+                    `).join('')}
+                `;
+            } else if (field === 'tipo') {
+                inputElement = document.createElement('select');
+                const tipos = isComputador ? options.tipos_dispositivo : options.tipos_outros;
+                inputElement.innerHTML = `
+                    <option value="">Selecione o tipo</option>
+                    ${tipos.map(t => `
+                        <option value="${t}" ${currentValue.toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${t}</option>
                     `).join('')}
                 `;
             } else if (field === 'qnt_ram') {
@@ -537,6 +571,12 @@ async function toggleEditMode(id_tomb) {
                         <option value="${tipo}" ${currentValue === tipo ? 'selected' : ''}>${tipo}</option>
                     `).join('')}
                 `;
+            } else if (field === 'funcionando') {
+                inputElement = document.createElement('select');
+                inputElement.innerHTML = `
+                    <option value="true" ${currentValue === 'Sim' ? 'selected' : ''}>Sim</option>
+                    <option value="false" ${currentValue === 'Não' ? 'selected' : ''}>Não</option>
+                `;
             } else if (field === 'estagiario') {
                 inputElement = document.createElement('select');
                 inputElement.innerHTML = `
@@ -545,6 +585,19 @@ async function toggleEditMode(id_tomb) {
                         <option value="${estagiario}" ${currentValue === estagiario ? 'selected' : ''}>${estagiario}</option>
                     `).join('')}
                 `;
+            } else if (field === 'data_de_an') {
+                inputElement = document.createElement('input');
+                inputElement.type = 'date';
+                if (currentValue && currentValue !== 'N/A') {
+                    const parts = currentValue.split('/');
+                    if (parts.length === 3) {
+                        inputElement.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    } else {
+                        inputElement.value = currentValue;
+                    }
+                } else {
+                    inputElement.value = '';
+                }
             } else if (field === 'descricao') {
                 inputElement = document.createElement('textarea');
                 inputElement.value = currentValue;
@@ -564,16 +617,9 @@ async function toggleEditMode(id_tomb) {
         editButton.dataset.id = id_tomb;
         editButton.addEventListener('click', saveChanges);
     } else {
-        // Sair do modo de edição
+        // sair do modo de edição
         caract.querySelectorAll('input, select, textarea').forEach(input => {
             const field = input.dataset.field;
-            // Só mostra RAM/armazenamento se for computador
-            if (
-                (!isComputador && (field === 'qnt_ram' || field === 'tipo_armaz'))
-            ) {
-                input.remove();
-                return;
-            }
             const newSpan = document.createElement('span');
             newSpan.className = 'editable';
             newSpan.dataset.field = field;
@@ -585,7 +631,7 @@ async function toggleEditMode(id_tomb) {
                 if (field === 'qnt_armaz' && input.value === '1000') newSpan.textContent = '1 TB';
             } else if (field === 'tipo_armaz') {
                 newSpan.textContent = input.value || 'N/A';
-            } else if (field === 'marca' || field === 'modelo' || field === 'locat_do_disp' || field === 'descricao' || field === 'estagiario') {
+            } else if (field === 'marca' || field === 'modelo' || field === 'locat_do_disp' || field === 'descricao' || field === 'estagiario' || field === 'tipo') {
                 newSpan.textContent = input.value || 'N/A';
             } else if (field === 'data_de_an') {
                 if (input.value) {
@@ -609,6 +655,8 @@ async function toggleEditMode(id_tomb) {
         editButton.onclick = () => toggleEditMode(id_tomb);
     }
 }
+
+
 
 async function saveChanges(event) {
     event.preventDefault(); // Prevent default form submission if any
