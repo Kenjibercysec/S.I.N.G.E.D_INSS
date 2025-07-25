@@ -67,15 +67,15 @@
             const response = await fetch('/admin/options');
             const options = await response.json();
             
-            // Preencher tipos de dispositivos
             const tipoDispSelect = document.getElementById('tipo_de_disp');
             tipoDispSelect.innerHTML = `
-                <option value="">Tipo de Dispositivo</option>
-                ${options.tipos_dispositivo.map(tipo => `
-                    <option value="${tipo}">${tipo}</option>
-                `).join('')}
+            <option value="">Tipo de Dispositivo</option>
+            ${options.tipos_dispositivo.map(tipo => `
+                <option value="${tipo}">${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</option>
+            `).join('')}
             `;
-            
+
+        
 
             // Preencher marcas
             const marcaSelect = document.getElementById('marca');
@@ -148,4 +148,4 @@
     document.addEventListener('DOMContentLoaded', loadOptions);
     </script>
 </body>
-</html>
+</html>João

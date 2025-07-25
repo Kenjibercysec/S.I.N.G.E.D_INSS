@@ -286,13 +286,15 @@ def search_dispositivos(
                 DispositivoModel.funcionando.cast(String).ilike(f"%{q}%"),
                 DispositivoModel.tipo_armaz.ilike(f"%{q}%"),
                 DispositivoModel.qnt_ram.cast(String).ilike(f"%{q}%"),
-                DispositivoModel.tipo_de_disp.ilike(f"%{q}%")
+                DispositivoModel.tipo_de_disp.ilike(f"%{q}%"),
+                DispositivoModel.estagiario.ilike(f"%{q}%")
             ))
             filtros_outros.append(or_(
                 OutroDispositivo.id_tomb.cast(String).ilike(f"%{q}%"),
                 OutroDispositivo.marca.ilike(f"%{q}%"),
                 OutroDispositivo.modelo.ilike(f"%{q}%"),
                 OutroDispositivo.funcionando.cast(String).ilike(f"%{q}%"),
+                OutroDispositivo.estagiario.ilike(f"%{q}%")
             ))
         else:
             if id_tomb:
@@ -301,6 +303,9 @@ def search_dispositivos(
             if marca:
                 filtros_pc.append(DispositivoModel.marca.ilike(f"%{marca}%"))
                 filtros_outros.append(OutroDispositivo.marca.ilike(f"%{marca}%"))
+            if estagiario:
+                filtros_pc.append(DispositivoModel.estagiario.cast(String).ilike(f"%{estagiario}%"))
+                filtros_outros.append(OutroDispositivo.estagiario.cast(String).ilike(f"%{estagiario}%"))
             if modelo:
                 filtros_pc.append(DispositivoModel.modelo.ilike(f"%{modelo}%"))
                 filtros_outros.append(OutroDispositivo.modelo.ilike(f"%{modelo}%"))
@@ -383,24 +388,44 @@ def search_dispositivos(
         logger.error(f"Error searching dispositivos: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from sqlalchemy import or_, cast, String
+
 @app.get("/dispositivos/autocomplete/{query}")
 def autocomplete_dispositivos(query: str, db: Session = Depends(get_db)):
     logger.info(f"Autocompleting dispositivos with query: {query}")
     try:
-        # Busca parcial para todos os campos relevantes
-        dispositivos = db.query(DispositivoModel).filter(
-            DispositivoModel.id_tomb.cast(String).ilike(f"%{query}%") |
-            DispositivoModel.tipo_de_disp.ilike(f"%{query}%") |
-            DispositivoModel.marca.ilike(f"%{query}%") |
-            DispositivoModel.modelo.ilike(f"%{query}%")
-        ).limit(10).all()
+        # Filtros para DispositivoModel (PCs)
+        dispositivos_pc = db.query(DispositivoModel).filter(
+            or_(
+                DispositivoModel.id_tomb.cast(String).ilike(f"%{query}%"),
+                DispositivoModel.tipo_de_disp.ilike(f"%{query}%"),
+                DispositivoModel.marca.ilike(f"%{query}%"),
+                DispositivoModel.modelo.ilike(f"%{query}%"),
+                DispositivoModel.estagiario.ilike(f"%{query}%")
+            )
+        ).limit(5).all()
+
+        # Filtros para OutroDispositivo (outros dispositivos)
+        dispositivos_outros = db.query(OutroDispositivo).filter(
+            or_(
+                OutroDispositivo.id_tomb.cast(String).ilike(f"%{query}%"),
+                OutroDispositivo.tipo_de_disp.ilike(f"%{query}%"),
+                OutroDispositivo.marca.ilike(f"%{query}%"),
+                OutroDispositivo.modelo.ilike(f"%{query}%"),
+                OutroDispositivo.estagiario.ilike(f"%{query}%")
+            )
+        ).limit(5).all()
+
+        # Junta os resultados
+        dispositivos = dispositivos_pc + dispositivos_outros
 
         return {
             "results": [{
                 "id_tomb": d.id_tomb,
                 "tipo_de_disp": d.tipo_de_disp,
                 "marca": d.marca,
-                "modelo": d.modelo
+                "modelo": d.modelo,
+                "estagiario": d.estagiario
             } for d in dispositivos]
         }
     except Exception as e:

@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = {
                 id_tomb: parseInt(document.getElementById('id_tomb').value),
-                tipo_de_disp: 'Computador',
+                tipo_de_disp: document.getElementById('tipo_de_disp').value,  // Bug de salvar notebook como computador
                 qnt_ram: parseInt(document.getElementById('qnt_ram').value),
                 qnt_armaz: parseInt(document.getElementById('qnt_armaz').value),
                 tipo_armaz: document.getElementById('tipo_armaz').value,
