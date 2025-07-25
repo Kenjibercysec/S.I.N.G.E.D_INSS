@@ -170,8 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 marcaSelect.innerHTML = '<option value="">Qualquer</option>' +
                     marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
             }
-
-<<<<<<< HEAD
+            
             // Modelos (unificado)
             const modeloSelect = document.getElementById('filter-modelo');
             if (modeloSelect) {
@@ -183,17 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     modelos.map(modelo => `<option value="${modelo}">${modelo}</option>`).join('');
             }
 
-=======
-            const modeloSelect = document.getElementById('filter-modelo');
-            if(modeloSelect) {
-                let modelos = [];
-                if (options.modelos_pc) modelos = modelos.concat(options.modelos_pc);
-                if (options.modelos_outros) modelos = modelos.concat(options.modelos_outros);
-                modelos = [...new Set(modelos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                modeloSelect.innerHTML = '<option value="">Qualquer</option>' + 
-                    modelos.map(modelo => `<option value="${modelo}">${modelo}</option>`).join('');
-            }
->>>>>>> b68428c7dbf79caf15d707fba651cf94ee0cf34f
             // Tipo de Dispositivo (unificado)
             const tipoDispSelect = document.getElementById('filter-tipo_de_disp');
             if (tipoDispSelect) {
