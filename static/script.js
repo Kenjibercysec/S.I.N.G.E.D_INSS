@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (modelo) params.modelo = modelo;
             if (tipo_de_disp) params.tipo_de_disp = tipo_de_disp;
             if (marca) params.marca = marca;
+            if (modelo) params.modelo = modelo;
             if (funcionando) params.funcionando = funcionando;
             if (tipo_armaz) params.tipo_armaz = tipo_armaz;
             if (qnt_ram) params.qnt_ram = qnt_ram;
@@ -169,16 +170,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 marcaSelect.innerHTML = '<option value="">Qualquer</option>' +
                     marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
             }
-
+            
+            // Modelos (unificado)
             const modeloSelect = document.getElementById('filter-modelo');
-            if(modeloSelect) {
+            if (modeloSelect) {
                 let modelos = [];
                 if (options.modelos_pc) modelos = modelos.concat(options.modelos_pc);
-                if (options.modelos_outros) modelos = modelos.concat(options.modelos_outros);
+                if (options.modelo_outros) modelos = modelos.concat(options.modelo_outros);
                 modelos = [...new Set(modelos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                modeloSelect.innerHTML = '<option value="">Qualquer</option>' + 
+                modeloSelect.innerHTML = '<option value="">Qualquer</option>' +
                     modelos.map(modelo => `<option value="${modelo}">${modelo}</option>`).join('');
             }
+
             // Tipo de Dispositivo (unificado)
             const tipoDispSelect = document.getElementById('filter-tipo_de_disp');
             if (tipoDispSelect) {
