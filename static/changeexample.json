@@ -1,0 +1,85 @@
+{
+    "tipos_dispositivo": [
+        "computador",
+        "notebook"
+    ],
+    "marcas": [
+        "Positivo",
+        "Lenovo",
+        "Daten",
+        "Dell"
+    ],
+    "modelos_pc": [
+        "Positivo FIT 8510",
+        "Positivo FIT 8510 2gen",
+        "Positivo Premium",
+        "Lenovo ThinkCentre",
+        "Lenobo ThinkCentre 2gen"
+    ],
+    "tipos_armazenamento": [
+        "NAN",
+        "HDD",
+        "SSD"
+    ],
+    "quantidades_ram": [
+        "0",
+        "1",
+        "2",
+        "4",
+        "6",
+        "8",
+        "12",
+        "16"
+    ],
+    "quantidades_armazenamento": [
+        "0",
+        "120",
+        "128",
+        "160",
+        "240",
+        "256",
+        "320",
+        "500",
+        "1000"
+    ],
+    "tipos_outros": [
+        "Monitor",
+        "Impressora",
+        "Switch",
+        "Scanner",
+        "Teclado",
+        "Outros"
+    ],
+    "marcas_outros": [
+        "AOC",
+        "DataCom",
+        "Daten",
+        "Dell",
+        "D-link",
+        "Epcom",
+        "Fujitsu",
+        "Kodak",
+        "LG",
+        "Lenovo",
+        "Positivo",
+        "Samsung",
+        "3Com"
+    ],
+    "modelo_outros": [
+        "AOC 22B1H",
+        "AOC 24B1XH",
+        "DataCom DS-1005",
+        "Daten DGS-1005G",
+        "Dell E1916HV",
+        "Dell E2216HV",
+        "D-link DGS-1005G",
+        "Epcom EPM-2200"
+    ],
+    "estagiarios": [
+        "altere na pagina do adminstrador"
+    ],
+    "funcionando": [
+        "Sim",
+        "Não"
+    ]
+}
