@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = {
                 id_tomb: parseInt(document.getElementById('id_tomb').value),
-                tipo_de_disp: document.getElementById('tipo_de_disp').value,  // Bug de salvar notebook como computador
+                tipo_de_disp: document.getElementById('tipo_de_disp').value,  // Bug de salvar notebook como computadord
                 qnt_ram: parseInt(document.getElementById('qnt_ram').value),
                 qnt_armaz: parseInt(document.getElementById('qnt_armaz').value),
                 tipo_armaz: document.getElementById('tipo_armaz').value,
@@ -679,9 +679,8 @@ async function saveChanges(event) {
     const inputs = caract.querySelectorAll('input, select, textarea'); // Include textarea
     // Montar objeto com todos os campos esperados pelo backend
     const changes = {
-        id_tomb: parseInt(id_tomb), // Ensure id_tomb is an integer
-        // tipo_de_disp is not editable in this view, assume it's always 'Computador' or get it from non-editable span if needed
-        tipo_de_disp: caract.querySelector('p strong') ? caract.querySelector('p strong').nextSibling.textContent.replace('<strong>Tipo de dispositivo:</strong>', '').trim() : "Computador",
+        id_tomb: parseInt(id_tomb), 
+        tipo_de_disp: "",  // valor inicial vazio (vai ser preenchido no loop)
         qnt_ram: null,
         qnt_armaz: null,
         tipo_armaz: "",
