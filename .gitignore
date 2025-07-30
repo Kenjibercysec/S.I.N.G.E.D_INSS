@@ -1,5 +1,6 @@
 venv/
-__pcache__/
+.vscode/
+__pycache__/
 .idx/
 dispositivos.db
 static/options.json
