@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tipo_armaz: document.getElementById('tipo_armaz').value,
                 marca: document.getElementById('marca').value,
                 modelo: document.getElementById('modelo')?.value || 'Não especificado',
-                funcionando: document.getElementById('funcionando').value === 'true',
+                funcionando: document.getElementById('funcionando').value.toLowerCase() === 'sim',
                 data_de_an: document.getElementById('data_de_an').value,
                 locat_do_disp: document.getElementById('locat_do_disp').value,
                 descricao: document.getElementById('descricao').value,

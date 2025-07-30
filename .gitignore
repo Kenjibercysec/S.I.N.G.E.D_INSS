@@ -1,9 +1,1 @@
-# Environments
-venv/
-__pycache__/
-
-# IDE specific
-.idx/
-
-# Database file
-dispositivos.db
+venv
