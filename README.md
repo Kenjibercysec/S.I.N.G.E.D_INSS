@@ -64,6 +64,9 @@ python load_data.py
 
 Para iniciar o servidor:
 ```bash
+uvicorn app:app --host 0.0.0.0 --port 8080
+uvicorn app:app --host 127.0.0.1 --port 8080
+ou
 uvicorn app:app --reload
 ```
 
