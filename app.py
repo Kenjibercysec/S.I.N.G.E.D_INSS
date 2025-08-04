@@ -170,7 +170,7 @@ def logout(response: Response):
     # Apaga o cookie definindo max_age=0
     response.delete_cookie(key="logged_in")
     return response
-    
+
 @app.get("/dashboard", response_class=HTMLResponse)
 def get_dashboard(request: Request, db: Session = Depends(get_db)):
     try:
@@ -181,15 +181,34 @@ def get_dashboard(request: Request, db: Session = Depends(get_db)):
         for d in dispositivos:
             contagem_tipo[d.tipo_de_disp] = contagem_tipo.get(d.tipo_de_disp, 0) + 1
         
+        def count_by(key):
+            counts = {}
+            for d in dispositivos:
+                val = getattr(d, key) or 'N/A'
+                counts[val] = counts.get(val, 0) + 1
+            return counts
+        contagem_por_tipo = count_by('tipo_de_disp')
+        contagem_por_marca = count_by('marca')
+        contagem_por_modelo = count_by('modelo')
+        contagem_por_estagiario = count_by('estagiario')
+
         filtros = {
             "tipos": sorted(list(set(d.tipo_de_disp for d in dispositivos if d.tipo_de_disp))),
             "marcas": sorted(list(set(d.marca for d in dispositivos if d.marca))),
+            "modelos": sorted(list(set(d.modelo for d in dispositivos if d.modelo))),
             "estagiarios": sorted(list(set(d.estagiario for d in dispositivos if d.estagiario)))
         }
         context = {
-            "request": request, "total_dispositivos": total, "funcionando": funcionando,
-            "nao_funcionando": total - funcionando, "contagem_por_tipo": json.dumps(contagem_tipo),
-            "dispositivos": dispositivos, "filtros": filtros
+            "request": request,
+            "total_dispositivos": total,
+            "funcionando": funcionando,
+            "nao_funcionando": total - funcionando,
+            "contagem_por_tipo": json.dumps(contagem_por_tipo),
+            "contagem_por_marca": json.dumps(contagem_por_marca),
+            "contagem_por_modelo": json.dumps(contagem_por_modelo),
+            "contagem_por_estagiario": json.dumps(contagem_por_estagiario),
+            "dispositivos": dispositivos,
+            "filtros": filtros
         }
         return templates.TemplateResponse("dashboard.html", context)
     except Exception as e:
