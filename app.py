@@ -176,10 +176,7 @@ def get_dashboard(request: Request, db: Session = Depends(get_db)):
     try:
         dispositivos = db.query(DispositivoModel).all() + db.query(OutroDispositivo).all()
         total = len(dispositivos)
-        funcionando = sum(1 for d in dispositivos if d.funcionando)
-        contagem_tipo = {}
-        for d in dispositivos:
-            contagem_tipo[d.tipo_de_disp] = contagem_tipo.get(d.tipo_de_disp, 0) + 1
+        funcionando_count = sum(1 for d in dispositivos if d.funcionando)
         
         def count_by(key):
             counts = {}
@@ -187,22 +184,27 @@ def get_dashboard(request: Request, db: Session = Depends(get_db)):
                 val = getattr(d, key) or 'N/A'
                 counts[val] = counts.get(val, 0) + 1
             return counts
+
         contagem_por_tipo = count_by('tipo_de_disp')
         contagem_por_marca = count_by('marca')
         contagem_por_modelo = count_by('modelo')
         contagem_por_estagiario = count_by('estagiario')
-
+        
+        # SOLUÇÃO AQUI: Carrega as opções do options.json para os filtros.
+        options = load_options()
+        all_models = sorted(list(set(options.get('modelos_pc', []) + options.get('modelo_outros', []))))
         filtros = {
-            "tipos": sorted(list(set(d.tipo_de_disp for d in dispositivos if d.tipo_de_disp))),
-            "marcas": sorted(list(set(d.marca for d in dispositivos if d.marca))),
-            "modelos": sorted(list(set(d.modelo for d in dispositivos if d.modelo))),
-            "estagiarios": sorted(list(set(d.estagiario for d in dispositivos if d.estagiario)))
+            "tipos": sorted(list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
+            "marcas": sorted(list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
+            "modelos": all_models,
+            "estagiarios": sorted(options.get('estagiarios', []))
         }
+        
         context = {
             "request": request,
             "total_dispositivos": total,
-            "funcionando": funcionando,
-            "nao_funcionando": total - funcionando,
+            "funcionando": funcionando_count,
+            "nao_funcionando": total - funcionando_count,
             "contagem_por_tipo": json.dumps(contagem_por_tipo),
             "contagem_por_marca": json.dumps(contagem_por_marca),
             "contagem_por_modelo": json.dumps(contagem_por_modelo),
