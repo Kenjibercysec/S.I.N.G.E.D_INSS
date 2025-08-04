@@ -34,8 +34,6 @@
             <a class="as" href="/selecao"><button type="button" style="opacity: 70%;" class="button">Cadastro</button></a>
             <a class="as" href="/login"><button type="button" style="opacity: 70%;" class="button">Login do Administrador</button></a>
         </div>
-
-        
         
         <div class="stats-grid">
             <div class="stat-card"><h3>Total</h3><p id="total-dispositivos">{{ total_dispositivos }}</p></div>
@@ -44,83 +42,132 @@
         </div>
         
         <div class="dashboard-container">
-        <div class="filters">
-            <h4>Filtros</h4>
-            <div class="form-group"><label for="filtro-tipo">Tipo</label><select id="filtro-tipo"><option value="">Todos</option>{% for tipo in filtros.tipos %}<option value="{{ tipo }}">{{ tipo }}</option>{% endfor %}</select></div>
-            <div class="form-group"><label for="filtro-marca">Marca</label><select id="filtro-marca"><option value="">Todas</option>{% for marca in filtros.marcas %}<option value="{{ marca }}">{{ marca }}</option>{% endfor %}</select></div>
-            <div class="form-group"><label for="filtro-estagiario">Estagiário</label><select id="filtro-estagiario"><option value="">Todos</option>{% for estagiario in filtros.estagiarios %}<option value="{{ estagiario }}">{{ estagiario }}</option>{% endfor %}</select></div>
-            <div class="form-group"><label for="filtro-funcionando">Status</label><select id="filtro-funcionando"><option value="">Todos</option><option value="true">Funcionando</option><option value="false">Com Defeito</option></select></div>
-            <button id="limpar-filtros">Limpar</button>
+            <div class="filters">
+                <h4>Filtros</h4>
+                <div class="form-group"><label for="filtro-tipo">Tipo</label><select id="filtro-tipo"><option value="">Todos</option>{% for tipo in filtros.tipos %}<option value="{{ tipo }}">{{ tipo }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-marca">Marca</label><select id="filtro-marca"><option value="">Todas</option>{% for marca in filtros.marcas %}<option value="{{ marca }}">{{ marca }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-estagiario">Estagiário</label><select id="filtro-estagiario"><option value="">Todos</option>{% for estagiario in filtros.estagiarios %}<option value="{{ estagiario }}">{{ estagiario }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-funcionando">Status</label><select id="filtro-funcionando"><option value="">Todos</option><option value="true">Funcionando</option><option value="false">Com Defeito</option></select></div>
+                <button id="aplicar-filtros">Aplicar Filtros</button>
+                <button id="limpar-filtros" style="margin-top: 10px;">Limpar Filtros</button>
+            </div>
+            <div class="chart-container"><canvas id="grafico-tipo"></canvas></div>
         </div>
-        <div class="chart-container"><canvas id="grafico-tipo"></canvas></div>
+    
+        <div class="table-container">
+            <table id="tabela-dispositivos">
+                <thead><tr><th>Tombo</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Status</th><th>Estagiário</th><th>Análise</th></tr></thead>
+                <tbody>
+                    {% for d in dispositivos %}
+                    <tr><td>{{ d.id_tomb }}</td><td>{{ d.tipo_de_disp }}</td><td>{{ d.marca }}</td><td>{{ d.modelo }}</td><td>{{ "Sim" if d.funcionando else "Não" }}</td><td>{{ d.estagiario or 'N/A' }}</td><td>{{ d.data_de_an.strftime('%d/%m/%Y') if d.data_de_an else 'N/A' }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <script id="chart-data" type="application/json">{{ contagem_por_tipo | safe }}</script>
     </div>
-    
-    <div class="table-container">
-        <table id="tabela-dispositivos">
-            <thead><tr><th>Tombo</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Status</th><th>Estagiário</th><th>Análise</th></tr></thead>
-            <tbody>
-                {% for d in dispositivos %}
-                <tr><td>{{ d.id_tomb }}</td><td>{{ d.tipo_de_disp }}</td><td>{{ d.marca }}</td><td>{{ d.modelo }}</td><td>{{ "Sim" if d.funcionando else "Não" }}</td><td>{{ d.estagiario or 'N/A' }}</td><td>{{ d.data_de_an.strftime('%d/%m/%Y') if d.data_de_an else 'N/A' }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    
-    <script id="chart-data" type="application/json">{{ contagem_por_tipo | safe }}</script>
-    
-    
-</div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-  const chartDataEl = document.getElementById('chart-data');
-  if (chartDataEl) {
-      try {
-          const chartData = JSON.parse(chartDataEl.textContent);
-          new Chart(document.getElementById('grafico-tipo').getContext('2d'), {
-              type: 'doughnut',
-              data: {
-                  labels: Object.keys(chartData),
-                  datasets: [{
-                      data: Object.values(chartData),
-                      backgroundColor: ['#0047a5', '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8'],
-                  }]
-              },
-              options: { responsive: true, maintainAspectRatio: false }
-          });
-      } catch (e) { console.error("Error parsing chart data:", e); }
-  }
-
-  const filters = document.querySelectorAll('#filtro-tipo, #filtro-marca, #filtro-estagiario, #filtro-funcionando');
-  filters.forEach(filter => filter.addEventListener('change', applyDashboardFilters));
-  
-  document.getElementById('limpar-filtros')?.addEventListener('click', () => {
-      filters.forEach(filter => filter.value = '');
-      applyDashboardFilters(); // Recarrega com a lista completa
-  });
-});
-
-async function applyDashboardFilters() {
-  const params = new URLSearchParams();
-  params.append('tipo', document.getElementById('filtro-tipo').value);
-  params.append('marca', document.getElementById('filtro-marca').value);
-  params.append('estagiario', document.getElementById('filtro-estagiario').value);
-  params.append('funcionando', document.getElementById('filtro-funcionando').value);
-  
-  const response = await fetch(`/dispositivos/search/?${params.toString()}`);
-  const data = await response.json();
-  const devices = data.results || [];
-
-  const tableBody = document.querySelector("#tabela-dispositivos tbody");
-  tableBody.innerHTML = '';
-  devices.forEach(d => {
-      tableBody.innerHTML += `<tr><td>${d.id_tomb}</td><td>${d.tipo_de_disp}</td><td>${d.marca}</td><td>${d.modelo}</td><td>${d.funcionando}</td><td>${d.estagiario}</td><td>${d.data_de_an}</td></tr>`;
-  });
-
-  document.getElementById('total-dispositivos').textContent = devices.length;
-  const funcionandoCount = devices.filter(d => d.funcionando === 'Sim').length;
-  document.getElementById('funcionando').textContent = funcionandoCount;
-  document.getElementById('nao-funcionando').textContent = devices.length - funcionandoCount;
-}
+    document.addEventListener('DOMContentLoaded', function() {
+        let chart; // Variável para armazenar a instância do gráfico
+    
+        // Função para inicializar ou atualizar o gráfico
+        function updateChart(data) {
+            const ctx = document.getElementById('grafico-tipo').getContext('2d');
+            
+            // Se o gráfico já existe, destrua-o
+            if (chart) {
+                chart.destroy();
+            }
+    
+            // Cria um novo gráfico com os novos dados
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#0047a5', '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    
+        // Função para aplicar os filtros e atualizar o dashboard
+        async function applyDashboardFilters() {
+            const params = new URLSearchParams();
+            params.append('tipo_de_disp', document.getElementById('filtro-tipo').value);
+            params.append('marca', document.getElementById('filtro-marca').value);
+            params.append('estagiario', document.getElementById('filtro-estagiario').value);
+            params.append('funcionando', document.getElementById('filtro-funcionando').value);
+    
+            try {
+                const response = await fetch(`/dispositivos/search/?${params.toString()}`);
+                const data = await response.json();
+                const devices = data.results || [];
+    
+                // Atualizar a tabela
+                const tableBody = document.querySelector("#tabela-dispositivos tbody");
+                tableBody.innerHTML = '';
+                devices.forEach(d => {
+                    const dataDeAn = d.data_de_an ? new Date(d.data_de_an).toLocaleDateString('pt-BR') : 'N/A';
+                    tableBody.innerHTML += `<tr>
+                        <td>${d.id_tomb}</td>
+                        <td>${d.tipo_de_disp}</td>
+                        <td>${d.marca}</td>
+                        <td>${d.modelo}</td>
+                        <td>${d.funcionando ? 'Sim' : 'Não'}</td>
+                        <td>${d.estagiario || 'N/A'}</td>
+                        <td>${dataDeAn}</td>
+                    </tr>`;
+                });
+    
+                // Atualizar os contadores
+                const total = devices.length;
+                const funcionandoCount = devices.filter(d => d.funcionando).length;
+                document.getElementById('total-dispositivos').textContent = total;
+                document.getElementById('funcionando').textContent = funcionandoCount;
+                document.getElementById('nao-funcionando').textContent = total - funcionandoCount;
+    
+                // Atualizar o gráfico
+                const contagemPorTipo = devices.reduce((acc, device) => {
+                    acc[device.tipo_de_disp] = (acc[device.tipo_de_disp] || 0) + 1;
+                    return acc;
+                }, {});
+                updateChart(contagemPorTipo);
+    
+            } catch (error) {
+                console.error("Erro ao aplicar filtros:", error);
+            }
+        }
+    
+        // Carregar dados iniciais do gráfico
+        const initialChartDataEl = document.getElementById('chart-data');
+        if (initialChartDataEl) {
+            try {
+                const initialChartData = JSON.parse(initialChartDataEl.textContent);
+                updateChart(initialChartData);
+            } catch (e) {
+                console.error("Erro ao carregar dados iniciais do gráfico:", e);
+            }
+        }
+    
+        // Adicionar listeners aos botões
+        document.getElementById('aplicar-filtros').addEventListener('click', applyDashboardFilters);
+    
+        document.getElementById('limpar-filtros').addEventListener('click', () => {
+            document.getElementById('filtro-tipo').value = '';
+            document.getElementById('filtro-marca').value = '';
+            document.getElementById('filtro-estagiario').value = '';
+            document.getElementById('filtro-funcionando').value = '';
+            applyDashboardFilters(); // Recarrega com a lista completa
+        });
+    });
     </script>
 </body>
 </html>
