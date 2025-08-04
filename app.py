@@ -170,10 +170,32 @@ def logout(response: Response):
     # Apaga o cookie definindo max_age=0
     response.delete_cookie(key="logged_in")
     return response
-@app.get("/dashboard")
-def outra_pagina(request: Request):
-    logger.info("Accessing dashboard")
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    
+@app.get("/dashboard", response_class=HTMLResponse)
+def get_dashboard(request: Request, db: Session = Depends(get_db)):
+    try:
+        dispositivos = db.query(DispositivoModel).all() + db.query(OutroDispositivo).all()
+        total = len(dispositivos)
+        funcionando = sum(1 for d in dispositivos if d.funcionando)
+        contagem_tipo = {}
+        for d in dispositivos:
+            contagem_tipo[d.tipo_de_disp] = contagem_tipo.get(d.tipo_de_disp, 0) + 1
+        
+        filtros = {
+            "tipos": sorted(list(set(d.tipo_de_disp for d in dispositivos if d.tipo_de_disp))),
+            "marcas": sorted(list(set(d.marca for d in dispositivos if d.marca))),
+            "estagiarios": sorted(list(set(d.estagiario for d in dispositivos if d.estagiario)))
+        }
+        context = {
+            "request": request, "total_dispositivos": total, "funcionando": funcionando,
+            "nao_funcionando": total - funcionando, "contagem_por_tipo": json.dumps(contagem_tipo),
+            "dispositivos": dispositivos, "filtros": filtros
+        }
+        return templates.TemplateResponse("dashboard.html", context)
+    except Exception as e:
+        logger.error(f"Erro no dashboard: {e}")
+        return templates.TemplateResponse("dashboard.html", {"request": request, "error": "Erro ao carregar dados."})
+
 
 @app.get("/selecao")
 def selecao(request: Request):
