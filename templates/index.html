@@ -27,23 +27,75 @@
             <div class="search-bar">
                 <div class="advanced-filter-dropdown" style="position: relative; display: inline-block;">
                     <button id="advanced-filter-btn" type="button" class="filter-button">Filtros▼</button>
-                    <div id="advanced-filter-content" style="display: none; position: absolute; background: #fff; border: 1px solid #ccc; z-index: 10; padding: 16px; min-width: 250px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    </label>
-                    <label style="display:block; margin-bottom: 6px;">Tipo de Dispositivo: <select id="filter-tipo_de_disp" class="form-select"></select></label>
-                    <label style="display:block; margin-bottom: 6px;">Marca: <select id="filter-marca" class="form-select"></select></label>
-                    <label style="display:block; margin-bottom: 6px;">Modelo: <select id="filter-modelo" class="form-select"></select></label>
-                    <label style="display:block; margin-bottom: 6px;">Funcionando: 
-                        <select id="filter-funcionando" class="form-select">
-                            <option value="">Qualquer</option>
-                            <option value="true">Sim</option>
-                            <option value="false">Não</option>
-                        </select>
-                        <label style="display:block; margin-bottom: 6px;">Tipo de Armazenamento: <select id="filter-tipo_armaz" class="form-select"></select></label>
-                        <label style="display:block; margin-bottom: 6px;">Quantidade de Armazenamento: <select id="filter-qnt_armaz" class="form-select"></select></label>
-                        <label style="display:block; margin-bottom: 6px;">Memória RAM: <select id="filter-qnt_ram" class="form-select"></select></label>
-                        <label style="display:block; margin-bottom: 6px;">Estagiário: <select id="filter-estagiario" class="form-select"></select></label>
-                                               <button id="apply-advanced-filter" type="button" class="button"  style="margin-top: 8px;">Filtrar</button>
-                    </div>
+                    
+<div id="advanced-filter-content" style="display: none; position: absolute; background: #fff; border: 1px solid #ccc; z-index: 10; padding: 16px; min-width: 250px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <label style="display:block; margin-bottom: 6px;">Tipo de Dispositivo:</label>
+        <select id="filter-tipo_de_disp" class="form-select">
+            <option value="">Todos</option>
+            {% for tipo in filtros.tipos %}
+            <option value="{{ tipo }}">{{ tipo }}</option>
+            {% endfor %}
+        </select>
+    
+    <label style="display:block; margin-bottom: 6px;">Marca: </label>
+        <select id="filter-marca" class="form-select">
+            <option value="">Todas</option>
+            {% for marca in filtros.marcas %}
+            <option value="{{ marca }}">{{ marca }}</option>
+            {% endfor %}
+        </select>
+    
+    <label style="display:block; margin-bottom: 6px;">Modelo: </label>
+        <select id="filter-modelo" class="form-select">
+            <option value="">Todos</option>
+            {% for modelo in filtros.modelos %}
+            <option value="{{ modelo }}">{{ modelo }}</option>
+            {% endfor %}
+        </select>
+    
+    <label style="display:block; margin-bottom: 6px;">Status: </label>
+        <select id="filter-funcionando" class="form-select">
+            <option value="">Status</option>
+            {% for funcionando in filtros.funcionando %}
+            <option value="{{ funcionando }}">{{ funcionando }}</option>
+            {% endfor %}
+        </select>
+    
+    <label style="display:block; margin-bottom: 6px;">Tipo de Armazenamento: </label>
+        <select id="filter-tipo_armaz" class="form-select">
+            <option value="">Qualquer</option>
+            {% for tipo in filtros.tipos_armazenamento %}
+            <option value="{{ tipo }}">{{ tipo }}</option>
+            {% endfor %}
+        </select>
+    
+    <label style="display:block; margin-bottom: 6px;">Quantidade de Armazenamento: </label>
+        <select id="filter-qnt_armaz" class="form-select">
+            <option value="">Qualquer</option>
+            {% for qnt in filtros.quantidades_armazenamento %}
+            <option value="{{ qnt }}">{{ qnt }}</option>
+            {% endfor %}
+        </select>
+    
+    <label style="display:block; margin-bottom: 6px;">Memória RAM: </label>
+        <select id="filter-qnt_ram" class="form-select">
+            <option value="">Qualquer</option>
+            {% for ram in filtros.quantidades_ram %}
+            <option value="{{ ram }}">{{ ram }}</option>
+            {% endfor %}
+        </select>
+    
+    <label style="display:block; margin-bottom: 6px;">Estagiário: </label>
+        <select id="filter-estagiario" class="form-select">
+            <option value="">Todos</option>
+            {% for estagiario in filtros.estagiarios %}
+            <option value="{{ estagiario }}">{{ estagiario }}</option>
+            {% endfor %}
+        </select>
+    
+    <button id="apply-advanced-filter" type="button" class="button" style="margin-top: 8px;">Filtrar</button>
+</div>
+
                 </div>
                 <input type="text" placeholder="Pesquisar" class="search-input" id="search-bar">
                 <button class="filter-button" id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>

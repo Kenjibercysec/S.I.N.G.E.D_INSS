@@ -108,10 +108,33 @@ async def shutdown_event():
 
 @app.get("/")
 def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    # Carrega todas as listas de opções do arquivo JSON
+    options = load_options()
+    
+    # Junta as opções de PC e Outros para ter filtros completos
+    all_models = sorted(list(set(options.get('modelos_pc', []) + options.get('modelo_outros', []))))
+    
+    # Cria o dicionário 'filtros' para ser consistente com o dashboard
+    filtros = {
+        "tipos": sorted(list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
+        "marcas": sorted(list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
+        "modelos": all_models,
+        "funcionando": sorted(options.get('funcionando', [])),
+        "tipos_armazenamento": sorted(options.get('tipos_armazenamento', [])),
+        "quantidades_ram": sorted(options.get('quantidades_ram', [])),
+        "quantidades_armazenamento": sorted(options.get('quantidades_armazenamento', [])),
+        "estagiarios": (options.get('estagiarios', []))
+    }
+    
+    # Envia os dados para a página dentro do 'context'
+    context = {
+        "request": request,
+        "filtros": filtros
+    }
+    return templates.TemplateResponse("index.html", context)
 
 @app.get("/login")
-def read_root(request: Request):
+def login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
     
 
