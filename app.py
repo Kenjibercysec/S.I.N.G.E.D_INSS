@@ -116,13 +116,13 @@ def read_root(request: Request):
     
     # Cria o dicionário 'filtros' para ser consistente com o dashboard
     filtros = {
-        "tipos": sorted(list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
-        "marcas": sorted(list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
+        "tipos": (list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
+        "marcas": (list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
         "modelos": all_models,
-        "funcionando": sorted(options.get('funcionando', [])),
-        "tipos_armazenamento": sorted(options.get('tipos_armazenamento', [])),
-        "quantidades_ram": sorted(options.get('quantidades_ram', [])),
-        "quantidades_armazenamento": sorted(options.get('quantidades_armazenamento', [])),
+        "funcionando": (options.get('funcionando', [])),
+        "tipos_armazenamento": (options.get('tipos_armazenamento', [])),
+        "quantidades_ram": (options.get('quantidades_ram', [])),
+        "quantidades_armazenamento": (options.get('quantidades_armazenamento', [])),
         "estagiarios": (options.get('estagiarios', []))
     }
     
