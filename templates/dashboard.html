@@ -49,6 +49,39 @@
                 <div class="form-group"><label for="filtro-tipo">Tipo</label><select id="filtro-tipo"><option value="">Todos</option>{% for tipo in filtros.tipos %}<option value="{{ tipo }}">{{ tipo }}</option>{% endfor %}</select></div>
                 <div class="form-group"><label for="filtro-marca">Marca</label><select id="filtro-marca"><option value="">Todas</option>{% for marca in filtros.marcas %}<option value="{{ marca }}">{{ marca }}</option>{% endfor %}</select></div>
                 <div class="form-group"><label for="filtro-modelo">Modelo</label><select id="filtro-modelo"><option value="">Todos</option>{% for modelo in filtros.modelos %}<option value="{{ modelo }}">{{ modelo }}</option>{% endfor %}</select></div>
+                <div class="form-group">
+                    <label for="filtro-tipo_armaz">Tipo de Armazenamento</label>
+                    <select id="filtro-tipo_armaz">
+                        <option value="">Todos</option>
+                        {% for tipo in filtros.tipos_armazenamento %}
+                        <option value="{{ tipo }}">{{ tipo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            
+                <!-- NOVO FILTRO: QUANTIDADE DE ARMAZENAMENTO -->
+                <div class="form-group">
+                    <label for="filtro-qnt_armaz">Quantidade de Armazenamento (GB)</label>
+                    <select id="filtro-qnt_armaz">
+                        <option value="">Todas</option>
+                        {% for qnt in filtros.quantidades_armazenamento %}
+                        <option value="{{ qnt }}">{{ qnt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            
+                <!-- NOVO FILTRO: QUANTIDADE DE RAM -->
+                <div class="form-group">
+                    <label for="filtro-qnt_ram">Quantidade de RAM (GB)</label>
+                    <select id="filtro-qnt_ram">
+                        <option value="">Todas</option>
+                        {% for ram in filtros.quantidades_ram %}
+                        <option value="{{ ram }}">{{ ram }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            
+                <div class="form-group"><label for="filtro-modelo">Modelo</label><select id="filtro-modelo"><option value="">Todos</option>{% for modelo in filtros.modelos %}<option value="{{ modelo }}">{{ modelo }}</option>{% endfor %}</select></div>
                 <div class="form-group"><label for="filtro-estagiario">Estagiário</label><select id="filtro-estagiario"><option value="">Todos</option>{% for estagiario in filtros.estagiarios %}<option value="{{ estagiario }}">{{ estagiario }}</option>{% endfor %}</select></div>
                 <div class="form-group"><label for="filtro-funcionando">Status</label><select id="filtro-funcionando"><option value="">Todos</option><option value="true">Funcionando</option><option value="false">Com Defeito</option></select></div>
                 <button id="aplicar-filtros">Aplicar Filtros</button>
@@ -118,7 +151,10 @@
             params.append('modelo', document.getElementById('filtro-modelo').value);
             params.append('estagiario', document.getElementById('filtro-estagiario').value);
             params.append('funcionando', document.getElementById('filtro-funcionando').value);
-    
+            params.append('tipo_armaz', document.getElementById('filtro-tipo_armaz').value);
+            params.append('qnt_ram', document.getElementById('filtro-qnt_ram').value);
+            params.append('qnt_armaz', document.getElementById('filtro-qnt_armaz').value);
+
             try {
                 const response = await fetch(`/dispositivos/search/?${params.toString()}`);
                 const data = await response.json();
@@ -173,7 +209,7 @@
         document.getElementById('aplicar-filtros').addEventListener('click', applyDashboardFilters);
     
         document.getElementById('limpar-filtros').addEventListener('click', () => {
-            ['filtro-tipo', 'filtro-marca', 'filtro-modelo', 'filtro-estagiario', 'filtro-funcionando'].forEach(id => document.getElementById(id).value = '');
+            ['filtro-tipo', 'filtro-marca', 'filtro-modelo', 'filtro-estagiario', 'filtro-funcionando', 'filtro-tipo_armaz', 'filtro-qnt_ram', 'filtro-qnt_armaz'].forEach(id => document.getElementById(id).value = '');
             applyDashboardFilters(); 
         });
     });
