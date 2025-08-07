@@ -221,15 +221,15 @@ def get_dashboard(request: Request, db: Session = Depends(get_db)):
 
         # SOLUÇÃO AQUI: Carrega as opções do options.json para os filtros.
         options = load_options()
-        all_models = sorted(list(set(options.get('modelos_pc', []) + options.get('modelo_outros', []))))
+        all_models = (list(set(options.get('modelos_pc', []) + options.get('modelo_outros', []))))
         filtros = {
-            "tipos": sorted(list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
-            "marcas": sorted(list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
+            "tipos": (list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
+            "marcas": (list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
             "modelos": all_models,
-            "tipos_armazenamento": sorted(options.get('tipos_armazenamento', [])),
-            "quantidades_ram": sorted(options.get('quantidades_ram', [])),
-            "quantidades_armazenamento": sorted(options.get('quantidades_armazenamento', [])),
-            "estagiarios": sorted(options.get('estagiarios', []))
+            "tipos_armazenamento": (options.get('tipos_armazenamento', [])),
+            "quantidades_ram": (options.get('quantidades_ram', [])),
+            "quantidades_armazenamento": (options.get('quantidades_armazenamento', [])),
+            "estagiarios": (options.get('estagiarios', []))
         }
         
         context = {
