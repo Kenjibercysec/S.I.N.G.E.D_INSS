@@ -160,78 +160,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/static/options.json');
             const options = await response.json();
 
-            // Marca (unificada)
-            const marcaSelect = document.getElementById('filter-marca');
-            if (marcaSelect) {
-                let marcas = [];
-                if (options.marcas) marcas = marcas.concat(options.marcas);
-                if (options.marcas_outros) marcas = marcas.concat(options.marcas_outros);
-                marcas = [...new Set(marcas)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                marcaSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
-            }
-            
-            // Modelos (unificado)
-            const modeloSelect = document.getElementById('filter-modelo');
-            if (modeloSelect) {
-                let modelos = [];
-                if (options.modelos_pc) modelos = modelos.concat(options.modelos_pc);
-                if (options.modelo_outros) modelos = modelos.concat(options.modelo_outros);
-                modelos = [...new Set(modelos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                modeloSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    modelos.map(modelo => `<option value="${modelo}">${modelo}</option>`).join('');
-            }
-
-            // Tipo de Dispositivo (unificado)
-            const tipoDispSelect = document.getElementById('filter-tipo_de_disp');
-            if (tipoDispSelect) {
-                let tipos = [];
-                if (options.tipos_dispositivo) tipos = tipos.concat(options.tipos_dispositivo);
-                if (options.tipos_outros) tipos = tipos.concat(options.tipos_outros);
-                tipos = [...new Set(tipos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                tipoDispSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    tipos.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
-            }
-
-            // Tipo de Armazenamento
-            const tipoArmazSelect = document.getElementById('filter-tipo_armaz');
-            if (tipoArmazSelect && options.tipos_armazenamento) {
-                tipoArmazSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    options.tipos_armazenamento.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
-            }
-
-            // RAM
-            const ramSelect = document.getElementById('filter-qnt_ram');
-            if (ramSelect && options.quantidades_ram) {
-                ramSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    options.quantidades_ram.map(ram => `<option value="${ram}">${ram} GB</option>`).join('');
-            }
-
-            // Quantidade de Armazenamento
-            const qntArmazSelect = document.getElementById('filter-qnt_armaz');
-            if (qntArmazSelect && options.quantidades_armazenamento) {
-                qntArmazSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    options.quantidades_armazenamento.map(qtd => 
-                        `<option value="${qtd}">${qtd === '1000' ? '1 TB' : qtd + ' GB'}</option>`
-                    ).join('');
-            }
-
-            // Estagiário
-            const estagiarioSelect = document.getElementById('filter-estagiario');
-            if (estagiarioSelect && options.estagiarios) {
-                estagiarioSelect.innerHTML = '<option value="">Qualquer</option>' +
-                    options.estagiarios.map(est => `<option value="${est}">${est}</option>`).join('');
-            }
         } catch (e) {
             console.error('Erro ao carregar opções para filtros avançados:', e);
         }
     }
 
-    // Preencher filtros sempre que o dropdown for aberto
-    const filterBtnAvancado = document.getElementById('advanced-filter-btn');
-    if (filterBtnAvancado) {
-        filterBtnAvancado.addEventListener('click', preencherFiltrosAvancados);
-    }
 });
 
 async function loadDevices() {

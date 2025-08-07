@@ -6,18 +6,22 @@
         <link rel="shortcut icon" href="static/inss-logo.ico" />
     <title>Cadastro de Computador</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script>
+       $(function () {
+          $("#header").load("../static/header.html");
+          $("#footer").load("../static/footer.html");
+       });
+    </script>
 </head>
 <body>
-    <div class="container">
-        <header class="header"> 
-            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
-        </header>
 
-        <div class="top-btns">
-            <a class="as" href="/"><button type="button" style="opacity: 70%;" class="button">Consulta</button></a>
-            <h2 style="color: #0047a5;">Cadastro de Computador</h2>
-            <a class="as" href="/selecao"><button type="button" style="opacity: 90%;" class="button">Cadastro</button></a>
-        </div>
+    <div class="container">
+        <div id="header"></div>
+    </div>
+
+    <div class="container">
+        <h2 style="color: #0047a5;">Cadastro de Computador</h2>
 
         <div class="form-section">
             <form id="cadastroForm" class="form-group">
@@ -60,6 +64,7 @@
             </form>
         </div>
     </div>
+    <div class="container"><div id="footer"></div></div>
     <script src="../static/inss.js"></script>
     <script src="/static/script.js"></script>
     <script>
