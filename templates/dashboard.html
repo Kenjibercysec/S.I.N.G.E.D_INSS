@@ -8,35 +8,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .dashboard-container { display: flex; flex-direction: row; flex-wrap: wrap;  gap: 20px; padding: 20px;}
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-card { background-color: #f8f9fa; border-left: 5px solid #0047a5; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .filters .form-group { margin-bottom: 10px; }
-        .filters select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid; }
-        .table-container { overflow-x: auto; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #0047a5; color: white; }
-        .sub-charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 0 20px 20px 20px; }
-        .chart-container { height: 45vh; }
-    </style>
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script>
+       $(function () {
+          $("#header").load("../static/header.html");
+          $("#footer").load("../static/footer.html");
+       });
+    </script>
 </head>
 
 <body>
+    <div class="container"><div id="header"></div></div>
+    
     <div class="container">
-        <header class="header"> 
-            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
-        </header>
-        
-        <h2 style="color: #0047a5;">SINGED INSS</h2>
-        <div class="top-btns">
-            <a class="as" href="/"><button type="button" style="opacity: 70%;" class="button">Consulta</button></a>
-            <a class="as" href="/dash"><button type="button" style="opacity: 90%;" class="button">Dashboard</button></a>
-            <a class="as" href="/selecao"><button type="button" style="opacity: 70%;" class="button">Cadastro</button></a>
-            <a class="as" href="/login"><button type="button" style="opacity: 70%;" class="button">Login do Administrador</button></a>
-        </div>
-        
+        <h2 style="color: #0047a5;">Dashboard</h2>
         <div class="stats-grid">
             <div class="stat-card"><h3>Total</h3><p id="total-dispositivos">{{ total_dispositivos }}</p></div>
             <div class="stat-card"><h3>Funcionando</h3><p id="funcionando">{{ funcionando }}</p></div>
@@ -88,6 +73,7 @@
         <script id="chart-data-estagiario" type="application/json">{{ contagem_por_estagiario | safe }}</script>
     </div>
 
+    <div class="container"><div id="footer"></div></div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         let charts = {};

@@ -6,23 +6,23 @@
         <link rel="shortcut icon" href="static/inss-logo.ico" />
     <title>SINGED INSS - selecione</title>
     <link rel="stylesheet" href="/static/style.css">
-    
-
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script>
+       $(function () {
+          $("#header").load("../static/header.html");
+          $("#footer").load("../static/footer.html");
+       });
+    </script>
 </head>
 <body>
+
     <div class="container">
-        <header class="header">
-            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
-        </header>
+        <div id="header"></div>
+    </div>
 
-        <h2 style="color: #0047a5;">SINGED INSS</h2>
-        <div class="top-btns">
-            <a class="as" href="/"><button type="button" style="opacity: 70%;" class="button">Consulta</button></a>
-            <a class="as" href="/dashboard"><button type="button" style="opacity: 70%;" class="button">Dashboard</button></a>
-            <a class="as" href="/selecao"><button type="button" style="opacity: 90%;" class="button">Cadastro</button></a>
-            <a class="as" href="/login"><button type="button" style="opacity: 70%;" class="button">Login do Administrador</button></a>
-        </div>
-
+    <div class="container">
+        
+        <h2 style="color: #0047a5;">Página de Cadastro</h2>
         <div class="form-section">
             <form class="form-group" id="deviceForm">
                 <select class="form-select" id="deviceType" name="device_type" required>
@@ -34,6 +34,7 @@
             </form>
         </div>
     </div>
+    <div class="container"><div id="footer"></div></div>
     <script src="../static/inss.js"></script>
     <script>
         document.getElementById('deviceForm').addEventListener('submit', async function(event) {

@@ -8,13 +8,21 @@
     <title>SINGED INSS - Painel Administrativo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script>
+       $(function () {
+          $("#header").load("../static/header.html");
+          $("#footer").load("../static/footer.html");
+       });
+    </script>
 </head>
 <body>
+
     <div class="container">
-        <header class="header"> 
-            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
-        </header>
-        
+        <div id="header"></div>
+    </div>
+    
+    <div class="container">
         <div class="admin-container">
             <h2 style="color: #0047a5;">Painel Administrativo</h2>
             
@@ -286,13 +294,10 @@
         </div>
         </div>
 
-        <footer>
-            <a href="/" class="back-link">Voltar para a página inicial</a>
-            <p>Desenvolvido por <a href="https://github.com/Vitorhugofsousa" target="_blank">Vitor Hugo</a> e 
-                <a href="https://github.com/Kenjibercysec" target="_blank">Silas Kenji</a></p>
-        </footer>
+    
     </div>
-
+ 
+    <div class="container"><div id="footer"></div></div>
     <script>
         async function addValue(field) {
             let inputId;
