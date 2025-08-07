@@ -108,10 +108,33 @@ async def shutdown_event():
 
 @app.get("/")
 def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    # Carrega todas as listas de opções do arquivo JSON
+    options = load_options()
+    
+    # Junta as opções de PC e Outros para ter filtros completos
+    all_models = sorted(list(set(options.get('modelos_pc', []) + options.get('modelo_outros', []))))
+    
+    # Cria o dicionário 'filtros' para ser consistente com o dashboard
+    filtros = {
+        "tipos": (list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
+        "marcas": (list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
+        "modelos": all_models,
+        "funcionando": (options.get('funcionando', [])),
+        "tipos_armazenamento": (options.get('tipos_armazenamento', [])),
+        "quantidades_ram": (options.get('quantidades_ram', [])),
+        "quantidades_armazenamento": (options.get('quantidades_armazenamento', [])),
+        "estagiarios": (options.get('estagiarios', []))
+    }
+    
+    # Envia os dados para a página dentro do 'context'
+    context = {
+        "request": request,
+        "filtros": filtros
+    }
+    return templates.TemplateResponse("index.html", context)
 
 @app.get("/login")
-def read_root(request: Request):
+def login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
     
 
@@ -170,10 +193,74 @@ def logout(response: Response):
     # Apaga o cookie definindo max_age=0
     response.delete_cookie(key="logged_in")
     return response
-@app.get("/dashboard")
-def outra_pagina(request: Request):
-    logger.info("Accessing dashboard")
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def get_dashboard(request: Request, db: Session = Depends(get_db)):
+    try:
+        dispositivos = db.query(DispositivoModel).all() + db.query(OutroDispositivo).all()
+        total = len(dispositivos)
+        funcionando_count = sum(1 for d in dispositivos if d.funcionando)
+        
+        def count_by(key):
+            counts = {}
+            for d in dispositivos:
+                # Verifica se o dispositivo tem o atributo antes de acessá-lo
+                if hasattr(d, key):
+                    val = getattr(d, key) or 'N/A'
+                    counts[val] = counts.get(val, 0) + 1
+            return counts
+
+        contagem_por_tipo = count_by('tipo_de_disp')
+        contagem_por_marca = count_by('marca')
+        contagem_por_modelo = count_by('modelo')
+        contagem_por_estagiario = count_by('estagiario')
+        contagem_por_tipo_armaz = count_by('tipo_armaz')
+        contagem_por_qnt_ram = count_by('qnt_ram')
+        contagem_por_qnt_armaz = count_by('qnt_armaz')
+
+
+        # SOLUÇÃO AQUI: Carrega as opções do options.json para os filtros.
+        options = load_options()
+        all_models = (list(set(options.get('modelos_pc', []) + options.get('modelo_outros', []))))
+        filtros = {
+            "tipos": (list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
+            "marcas": (list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
+            "modelos": all_models,
+            "tipos_armazenamento": (options.get('tipos_armazenamento', [])),
+            "quantidades_ram": (options.get('quantidades_ram', [])),
+            "quantidades_armazenamento": (options.get('quantidades_armazenamento', [])),
+            "estagiarios": (options.get('estagiarios', []))
+        }
+        
+        context = {
+            "request": request,
+            "total_dispositivos": total,
+            "funcionando": funcionando_count,
+            "nao_funcionando": total - funcionando_count,
+            "contagem_por_tipo": json.dumps(contagem_por_tipo),
+            "contagem_por_marca": json.dumps(contagem_por_marca),
+            "contagem_por_modelo": json.dumps(contagem_por_modelo),
+            "contagem_por_estagiario": json.dumps(contagem_por_estagiario),
+            "dispositivos": dispositivos,
+            "contagem_por_tipo_armaz": json.dumps(contagem_por_tipo_armaz),
+            "contagem_por_qnt_ram": json.dumps(contagem_por_qnt_ram),
+            "contagem_por_qnt_armaz": json.dumps(contagem_por_qnt_armaz),
+            "filtros": filtros
+        }
+        return templates.TemplateResponse("dashboard.html", context)
+    except Exception as e:
+        logger.error(f"Erro no dashboard: {e}")
+        # Garante que 'filtros' seja passado ao template mesmo em caso de erro
+        context = {
+            "request": request, 
+            "error": "Erro ao carregar dados.",
+            "filtros": {
+                "tipos": [], "marcas": [], "modelos": [],
+                "tipos_armazenamento": [], "quantidades_ram": [],
+                "quantidades_armazenamento": [], "estagiarios": []
+            }
+        }
+        return templates.TemplateResponse("dashboard.html", context)
 
 @app.get("/selecao")
 def selecao(request: Request):

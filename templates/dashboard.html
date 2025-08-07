@@ -3,26 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="shortcut icon" href="static/inss-logo.ico" />
+    <link rel="shortcut icon" href="static/inss-logo.ico" />
     <title>SINGED INSS - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="/static/style.css">
-    <style></style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script>
+       $(function () {
+          $("#header").load("../static/header.html");
+          $("#footer").load("../static/footer.html");
+       });
+    </script>
 </head>
-<body>
-    <div class="container">
-        <header class="header"> 
-            <a href="/"><img src="/static/inss-logo.png" alt="Logo INSS" class="logo"></a>
-        </header>
-        
-        <h2 style="color: #0047a5;">SINGED INSS</h2>
-        <div class="top-btns">
-            <a class="as" href="/"><button type="button" style="opacity: 70%;" class="button">Consulta</button></a>
-            <a class="as" href="/dash"><button type="button" style="opacity: 90%;" class="button">Dashboard</button></a>
-            <a class="as" href="/selecao"><button type="button" style="opacity: 70%;" class="button">Cadastro</button></a>
-            <a class="as" href="/login"><button type="button" style="opacity: 70%;" class="button">Login do Administrador</button></a>
-        </div>
 
-    </div> 
+<body>
+    <div class="container"><div id="header"></div></div>
+    
+    <div class="container">
+        <h2 style="color: #0047a5;">Dashboard</h2>
+        <div class="stats-grid">
+            <div class="stat-card"><h3>Total</h3><p id="total-dispositivos">{{ total_dispositivos }}</p></div>
+            <div class="stat-card"><h3>Funcionando</h3><p id="funcionando">{{ funcionando }}</p></div>
+            <div class="stat-card"><h3>Com Defeito</h3><p id="nao-funcionando">{{ nao_funcionando }}</p></div>
+        </div>
+        
+        <div class="dashboard-container">
+            <div class="filters">
+                <h4>Filtros</h4>
+                <div class="form-group"><label for="filtro-tipo">Tipo</label><select id="filtro-tipo"><option value="">Todos</option>{% for tipo in filtros.tipos %}<option value="{{ tipo }}">{{ tipo }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-marca">Marca</label><select id="filtro-marca"><option value="">Todas</option>{% for marca in filtros.marcas %}<option value="{{ marca }}">{{ marca }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-modelo">Modelo</label><select id="filtro-modelo"><option value="">Todos</option>{% for modelo in filtros.modelos %}<option value="{{ modelo }}">{{ modelo }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-tipo_armaz">Tipo de Armazenamento</label><select id="filtro-tipo_armaz"><option value="">Todos</option>{% for tipo in filtros.tipos_armazenamento %}<option value="{{ tipo }}">{{ tipo }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-qnt_armaz">Quantidade de Armazenamento (GB)</label><select id="filtro-qnt_armaz"><option value="">Todas</option>{% for qnt in filtros.quantidades_armazenamento %}<option value="{{ qnt }}">{{ qnt }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-qnt_ram">Quantidade de RAM (GB)</label> <select id="filtro-qnt_ram"><option value="">Todas</option>{% for ram in filtros.quantidades_ram %}<option value="{{ ram }}">{{ ram }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-modelo">Modelo</label><select id="filtro-modelo"><option value="">Todos</option>{% for modelo in filtros.modelos %}<option value="{{ modelo }}">{{ modelo }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-estagiario">Estagiário</label><select id="filtro-estagiario"><option value="">Todos</option>{% for estagiario in filtros.estagiarios %}<option value="{{ estagiario }}">{{ estagiario }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label for="filtro-funcionando">Status</label><select id="filtro-funcionando"><option value="">Todos</option><option value="true">Funcionando</option><option value="false">Com Defeito</option></select></div>
+                <div style="display: flex; flex-direction: row; justify-content: space-between; max-height: 60px; gap: 10px;">
+                    <button id="aplicar-filtros" type="button" class="button">Aplicar Filtros</button>
+                    <button id="limpar-filtros" type="button" class="btn-b">Limpar Filtros</button>
+                </div>
+            </div>
+            <div class="sub-charts-grid" style="width: 50%;">
+                <div class="chart-container"><canvas id="grafico-tipo"></canvas></div>
+                <div class="chart-container"><canvas id="grafico-marca"></canvas></div>
+            </div>
+        </div>
+        
+        <div class="sub-charts-grid">
+            <div class="chart-container"><canvas id="grafico-modelo"></canvas></div>
+            <div class="chart-container"><canvas id="grafico-estagiario"></canvas></div>
+        </div>
+    
+        <div class="table-container">
+            <table id="tabela-dispositivos">
+                <thead><tr><th>Tombamento</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Status</th><th>Estagiário</th><th>Análise</th></tr></thead>
+                <tbody>
+                    {% for d in dispositivos %}
+                    <tr><td>{{ d.id_tomb }}</td><td>{{ d.tipo_de_disp }}</td><td>{{ d.marca }}</td><td>{{ d.modelo }}</td><td>{{ "Sim" if d.funcionando else "Não" }}</td><td>{{ d.estagiario or 'N/A' }}</td><td>{{ d.data_de_an.strftime('%d/%m/%Y') if d.data_de_an else 'N/A' }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <script id="chart-data-tipo" type="application/json">{{ contagem_por_tipo | safe }}</script>
+        <script id="chart-data-marca" type="application/json">{{ contagem_por_marca | safe }}</script>
+        <script id="chart-data-modelo" type="application/json">{{ contagem_por_modelo | safe }}</script>
+        <script id="chart-data-estagiario" type="application/json">{{ contagem_por_estagiario | safe }}</script>
+    </div>
+
+    <div class="container"><div id="footer"></div></div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let charts = {};
+    
+        function updateChart(chartId, data, chartType = 'doughnut', title) {
+            const ctx = document.getElementById(chartId).getContext('2d');
+            
+            if (charts[chartId]) {
+                charts[chartId].destroy();
+            }
+    
+            charts[chartId] = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#0047a5', '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#fd7e14', '#6610f2', '#e83e8c'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: true, text: title }
+                    }
+                }
+            });
+        }
+    
+        async function applyDashboardFilters() {
+            const params = new URLSearchParams();
+            params.append('tipo_de_disp', document.getElementById('filtro-tipo').value);
+            params.append('marca', document.getElementById('filtro-marca').value);
+            params.append('modelo', document.getElementById('filtro-modelo').value);
+            params.append('estagiario', document.getElementById('filtro-estagiario').value);
+            params.append('funcionando', document.getElementById('filtro-funcionando').value);
+            params.append('tipo_armaz', document.getElementById('filtro-tipo_armaz').value);
+            params.append('qnt_ram', document.getElementById('filtro-qnt_ram').value);
+            params.append('qnt_armaz', document.getElementById('filtro-qnt_armaz').value);
+
+            try {
+                const response = await fetch(`/dispositivos/search/?${params.toString()}`);
+                const data = await response.json();
+                const devices = data.results || [];
+    
+                const tableBody = document.querySelector("#tabela-dispositivos tbody");
+                tableBody.innerHTML = '';
+                devices.forEach(d => {
+                    const dataDeAn = d.data_de_an ? new Date(d.data_de_an).toLocaleDateString('pt-BR') : 'N/A';
+                    tableBody.innerHTML += `<tr>
+                        <td>${d.id_tomb}</td><td>${d.tipo_de_disp}</td><td>${d.marca}</td>
+                        <td>${d.modelo}</td><td>${d.funcionando ? 'Sim' : 'Não'}</td>
+                        <td>${d.estagiario || 'N/A'}</td><td>${dataDeAn}</td>
+                    </tr>`;
+                });
+    
+                const total = devices.length;
+                const funcionandoCount = devices.filter(d => d.funcionando).length;
+                document.getElementById('total-dispositivos').textContent = total;
+                document.getElementById('funcionando').textContent = funcionandoCount;
+                document.getElementById('nao-funcionando').textContent = total - funcionandoCount;
+    
+                const countBy = (key) => devices.reduce((acc, device) => {
+                    const val = device[key] || 'N/A';
+                    acc[val] = (acc[val] || 0) + 1;
+                    return acc;
+                }, {});
+
+                updateChart('grafico-tipo', countBy('tipo_de_disp'), 'doughnut', 'Dispositivos por Tipo');
+                updateChart('grafico-marca', countBy('marca'), 'pie', 'Dispositivos por Marca');
+                updateChart('grafico-modelo', countBy('modelo'), 'pie', 'Dispositivos por Modelo');
+                updateChart('grafico-estagiario', countBy('estagiario'), 'pie', 'Dispositivos por Estagiário');
+    
+            } catch (error) {
+                console.error("Erro ao aplicar filtros:", error);
+            }
+        }
+    
+        function loadInitialChartData() {
+            try {
+                updateChart('grafico-tipo', JSON.parse(document.getElementById('chart-data-tipo').textContent), 'doughnut', 'Dispositivos por Tipo');
+                updateChart('grafico-marca', JSON.parse(document.getElementById('chart-data-marca').textContent), 'pie', 'Dispositivos por Marca');
+                updateChart('grafico-modelo', JSON.parse(document.getElementById('chart-data-modelo').textContent), 'pie', 'Dispositivos por Modelo');
+                updateChart('grafico-estagiario', JSON.parse(document.getElementById('chart-data-estagiario').textContent), 'pie', 'Dispositivos por Estagiário');
+            } catch (e) {
+                console.error("Erro ao carregar dados iniciais do gráfico:", e);
+            }
+        }
+        
+        loadInitialChartData();
+    
+        document.getElementById('aplicar-filtros').addEventListener('click', applyDashboardFilters);
+    
+        document.getElementById('limpar-filtros').addEventListener('click', () => {
+            ['filtro-tipo', 'filtro-marca', 'filtro-modelo', 'filtro-estagiario', 'filtro-funcionando', 'filtro-tipo_armaz', 'filtro-qnt_ram', 'filtro-qnt_armaz'].forEach(id => document.getElementById(id).value = '');
+            applyDashboardFilters(); 
+        });
+    });
+    </script>
 </body>
 </html>

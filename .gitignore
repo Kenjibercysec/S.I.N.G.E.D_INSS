@@ -1,5 +1,5 @@
 venv/
-__pcache__/
+__pycache__/
 .idx/
 dispositivos.db
 static/options.json
