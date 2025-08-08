@@ -1,4 +1,8 @@
 venv/
+<<<<<<< HEAD
+.vscode/
+=======
+>>>>>>> fordashboard
 __pycache__/
 .idx/
 dispositivos.db
