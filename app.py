@@ -18,6 +18,8 @@ import os
 from fastapi import Response, Cookie
 from fastapi.responses import RedirectResponse
 from datetime import timedelta
+from datetime import datetime
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -577,110 +579,93 @@ def get_dispositivo_history(id_tomb: int, db: Session = Depends(get_db)):
         if not history:
             return {"message": "No history found", "results": []}
 
-        # Buscar data_de_an do dispositivo (ou outros_dispositivos)
+        # Buscar em ambas as tabelas
         dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
-        if not dispositivo:
-            dispositivo = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
-        data_de_an = dispositivo.data_de_an.isoformat() if dispositivo and dispositivo.data_de_an else None
+        outro_disp = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
 
-        # Organizar histórico pela data_de_an (se existir)
-        # Como cada log já tem data_hora_alteracao, mas a ordenação principal é por data_de_an
-        # (caso haja mais de um dispositivo com o mesmo tombamento, pode ser ajustado)
+        # Pega a data_de_an se existir em qualquer um
+        data_de_an = None
+        if dispositivo and dispositivo.data_de_an:
+            data_de_an = dispositivo.data_de_an.isoformat()
+        elif outro_disp and outro_disp.data_de_an:
+            data_de_an = outro_disp.data_de_an.isoformat()
 
-        # Exibir o snapshot salvo em estado_anterior
+        # Mapeia os resultados com indicação da origem
+        results = []
+        for h in sorted(history, key=lambda x: x.data_hora_alteracao, reverse=True):
+            estado = json.loads(h.estado_anterior) if h.estado_anterior else None
+            origem = "Dispositivo" if dispositivo else "OutroDispositivo"
+            results.append({
+                "id_log": h.id_log,
+                "id_tomb": h.id_tomb,
+                "estado_anterior": estado,
+                "data_hora_alteracao": h.data_hora_alteracao.strftime("%d/%m/%Y %H:%M:%S") if h.data_hora_alteracao else None,
+                "origem": origem
+            })
+
         return {
             "message": "History retrieved successfully",
             "data_de_an": data_de_an,
-            "results": [
-                {
-                    "id_log": h.id_log,
-                    "id_tomb": h.id_tomb,
-                    "estado_anterior": json.loads(h.estado_anterior) if h.estado_anterior else None,
-                    "data_hora_alteracao": h.data_hora_alteracao.strftime("%d/%m/%Y %H:%M:%S") if h.data_hora_alteracao else None
-                }
-                for h in sorted(history, key=lambda x: x.data_hora_alteracao, reverse=True)
-            ]
+            "results": results
         }
     except Exception as e:
         logger.error(f"Error getting history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put("/dispositivos/{id_tomb}", response_model=DispositivoOut)
-def update_dispositivo(
-    id_tomb: int,
-    dispositivo: DispositivoCreateForm = Body(...),
-    db: Session = Depends(get_db)
-):
+
+@app.put("/dispositivos/{id_tomb}")
+def update_dispositivo(id_tomb: int, dispositivo_data: DispositivoUpdate, db: Session = Depends(get_db)):
     logger.info(f"Updating dispositivo with id_tomb: {id_tomb}")
-    logger.info(f"Received data: {dispositivo.dict()}")  # Debug log
     try:
-        # Primeiro tenta na tabela de computadores
-        db_dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
-        if db_dispositivo:
-            # Serializar o estado anterior completo do dispositivo
-            estado_anterior = {
-                "id_tomb": db_dispositivo.id_tomb,
-                "tipo_de_disp": db_dispositivo.tipo_de_disp,
-                "qnt_ram": db_dispositivo.qnt_ram,
-                "qnt_armaz": db_dispositivo.qnt_armaz,
-                "tipo_armaz": db_dispositivo.tipo_armaz,
-                "marca": db_dispositivo.marca,
-                "modelo": db_dispositivo.modelo,
-                "funcionando": db_dispositivo.funcionando,
-                "data_de_an": db_dispositivo.data_de_an.isoformat() if db_dispositivo.data_de_an else None,
-                "locat_do_disp": db_dispositivo.locat_do_disp,
-                "descricao": db_dispositivo.descricao,
-                "estagiario": db_dispositivo.estagiario
-            }
+        # Primeiro tenta encontrar no DispositivoModel
+        dispositivo = db.query(DispositivoModel).filter(DispositivoModel.id_tomb == id_tomb).first()
+        if dispositivo:
+            # Salvar estado anterior
+            dispositivo_dict = dispositivo.__dict__.copy()
+
+            # Atualizar campos
+            for key, value in dispositivo_data.dict(exclude_unset=True).items():
+                setattr(dispositivo, key, value)
+
+            # Criar log
             log = LogAtualizacao(
                 id_tomb=id_tomb,
-                estado_anterior=json.dumps(estado_anterior, ensure_ascii=False),
-                data_hora_alteracao=func.now()
+                estado_anterior=json.dumps(dispositivo_dict, default=str),
+                data_hora_alteracao=datetime.now()
             )
             db.add(log)
+            db.commit()
 
-            # Atualizar os campos do dispositivo
-            for field, new_value in dispositivo.dict().items():
-                if field != "id_tomb":
-                    setattr(db_dispositivo, field, new_value)
+            return {"message": "Dispositivo atualizado com sucesso"}
 
-            try:
-                db.commit()
-                db.refresh(db_dispositivo)
-                logger.info(f"Dispositivo atualizado com sucesso: {db_dispositivo.__dict__}")  # Debug log
-                return db_dispositivo
-            except Exception as commit_error:
-                db.rollback()
-                logger.error(f"Erro ao commitar alterações: {commit_error}")
-                raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
-        
-        # Se não achou, tenta na tabela de outros dispositivos
-        db_outro = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
-        if db_outro:
-            # Atualizar apenas os campos válidos para OutroDispositivo
-            outro_fields = [
-                "tipo_de_disp", "marca", "modelo", "funcionando",
-                "data_de_an", "locat_do_disp", "descricao", "estagiario"
-            ]
-            for field in outro_fields:
-                if hasattr(db_outro, field) and hasattr(dispositivo, field):
-                    setattr(db_outro, field, getattr(dispositivo, field))
-            try:
-                db.commit()
-                db.refresh(db_outro)
-                logger.info(f"OutroDispositivo atualizado com sucesso: {db_outro.__dict__}")
-                return db_outro
-            except Exception as commit_error:
-                db.rollback()
-                logger.error(f"Erro ao commitar alterações: {commit_error}")
-                raise HTTPException(status_code=500, detail=f"Erro ao salvar alterações: {str(commit_error)}")
+        # Se não achou, tenta no OutroDispositivo
+        outro_dispositivo = db.query(OutroDispositivo).filter(OutroDispositivo.id_tomb == id_tomb).first()
+        if outro_dispositivo:
+            # Salvar estado anterior
+            outro_dispositivo_dict = outro_dispositivo.__dict__.copy()
 
-        # Se não achou em nenhuma tabela
-        raise HTTPException(status_code=404, detail="Dispositivo not found")
+            # Atualizar campos
+            for key, value in dispositivo_data.dict(exclude_unset=True).items():
+                setattr(outro_dispositivo, key, value)
+
+            # Criar log
+            log = LogAtualizacao(
+                id_tomb=id_tomb,
+                estado_anterior=json.dumps(outro_dispositivo_dict, default=str),
+                data_hora_alteracao=datetime.now()
+            )
+            db.add(log)
+            db.commit()
+
+            return {"message": "Outro dispositivo atualizado com sucesso"}
+
+        # Se não encontrou em nenhum dos dois
+        return {"message": "Dispositivo não encontrado"}
+
     except Exception as e:
-        db.rollback()
         logger.error(f"Error updating dispositivo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/outros_dispositivos/")
 def create_outro_dispositivo(dispositivo: DispositivoCreateForm, db: Session = Depends(get_db)):

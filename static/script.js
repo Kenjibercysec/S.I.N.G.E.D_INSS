@@ -355,11 +355,13 @@ async function showHistory(id_tomb) {
         let historyHtml = "";
         for (const item of historyArr) {
             const estado = item.estado_anterior || {};
+
             historyHtml += `
                 <div style="margin-bottom: 12px; padding: 10px; background: #f4f8ff; border-left: 4px solid #0047a5; border-radius: 6px;">
+                    <p><strong>Origem:</strong> ${item.origem || '---'}</p>
                     <p><strong>Data da alteração:</strong> ${item.data_hora_alteracao || '---'}</p>
                     <p><strong>Nº Tombamento:</strong> ${estado.id_tomb || '---'}</p>
-                    <p><strong>Tipo de Dispositivo:</strong> ${estado.tipo_de_disp || '---'}</p>
+                    <p><strong>Tipo de Dispositivo:</strong> ${estado.tipo_de_disp || estado.tipo || '---'}</p>
                     <p><strong>Marca:</strong> ${estado.marca || '---'}</p>
                     <p><strong>Modelo:</strong> ${estado.modelo || '---'}</p>
                     <p><strong>Quantidade de RAM:</strong> ${estado.qnt_ram || '---'}</p>
@@ -380,6 +382,7 @@ async function showHistory(id_tomb) {
         document.getElementById("history-content").innerHTML = "<p style='color: red;'>Erro ao carregar histórico.</p>";
     }
 }
+
 
 function closeHistory() {
     const modal = document.getElementById("modal-history");
