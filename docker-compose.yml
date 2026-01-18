@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  singed-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: singed-inss
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persiste o banco de dados SQLite
+      - ./data:/app/data
+      # Persiste arquivos estáticos e configurações
+      - ./static/options.json:/app/static/options.json
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - singed-network
+
+networks:
+  singed-network:
+    driver: bridge

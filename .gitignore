@@ -1,9 +1,33 @@
+# Python
 venv/
-<<<<<<< HEAD
-.vscode/
-=======
->>>>>>> fordashboard
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+
+# IDEs
+.vscode/
 .idx/
+.idea/
+
+# Banco de dados
 dispositivos.db
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Configurações locais
 static/options.json
+
+# Docker data
+data/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

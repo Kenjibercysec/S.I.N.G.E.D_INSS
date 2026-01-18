@@ -1,0 +1,33 @@
+# Docker Compose para Desenvolvimento
+# Use este arquivo para desenvolvimento local com hot-reload
+#
+# Uso: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  singed-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: singed-inss-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      # Monta o código fonte para hot-reload
+      - .:/app
+      # Persiste o banco de dados
+      - ./data:/app/data
+      # Persiste configurações
+      - ./static:/app/static
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RELOAD=true
+    command: uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+    restart: unless-stopped
+    networks:
+      - singed-network
+
+networks:
+  singed-network:
+    driver: bridge

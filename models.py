@@ -12,7 +12,8 @@ class Dispositivo(Base):
     qnt_armaz = Column(Integer)
     tipo_armaz = Column(String(10))
     marca = Column(String(50), nullable=False)
-    modelo = Column(String(50), nullable=False)  # Alterar para permitir valores nulos
+    # Deixa modelo opcional para aceitar inserts que não informam o campo
+    modelo = Column(String(50), nullable=True)
     funcionando = Column(Boolean)
     data_de_an = Column(Date)
     locat_do_disp = Column(String(100))

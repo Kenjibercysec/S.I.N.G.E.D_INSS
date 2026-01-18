@@ -4,13 +4,13 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from database import get_db, init_db
+from database import get_db, init_db, engine
 from models import Dispositivo as DispositivoModel, LogAtualizacao, OutroDispositivo
 from schemas import DispositivoOut, DispositivoCreate, DispositivoUpdate  # Corrigir a importação
 import logging
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 from sqlalchemy.types import String
 from sqlalchemy import func
 import json
@@ -26,9 +26,86 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _normalize_date(value):
+    """Normaliza datas vindas do banco:
+    - string vazia -> None
+    - formato dd/mm/yy ou dd/mm/yyyy -> ISO string (YYYY-MM-DD)
+    - date/datetime -> isoformat string
+    - demais casos -> None
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return None
+        for fmt in ("%d/%m/%Y", "%d/%m/%y"):
+            try:
+                return datetime.strptime(value, fmt).date().isoformat()
+            except ValueError:
+                pass
+        # Se já estiver em iso, retorna como está
+        try:
+            return datetime.fromisoformat(value).date().isoformat()
+        except ValueError:
+            return None
+    if isinstance(value, datetime):
+        return value.date().isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    return None
+
+
+def _parse_date_str(value: str):
+    value = value.strip()
+    if not value:
+        return None
+    for fmt in ("%d/%m/%Y", "%d/%m/%y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def _clean_dates_in_db():
+    """Converte datas inválidas (dd/mm/yy etc.) para ISO direto no banco."""
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        # dispositivos
+        rows = conn.execute(text("SELECT id_tomb, data_de_an FROM dispositivos")).fetchall()
+        for row in rows:
+            raw = row[1]
+            iso = _parse_date_str(str(raw)) if raw is not None else None
+            if iso != raw:
+                conn.execute(text("UPDATE dispositivos SET data_de_an = :d WHERE id_tomb = :id"), {"d": iso, "id": row[0]})
+        # outros_dispositivos
+        rows = conn.execute(text("SELECT id_tomb, data_de_an, id FROM outros_dispositivos")).fetchall()
+        for row in rows:
+            raw = row[1]
+            iso = _parse_date_str(str(raw)) if raw is not None else None
+            if iso != raw:
+                conn.execute(text("UPDATE outros_dispositivos SET data_de_an = :d WHERE id = :pk"), {"d": iso, "pk": row[2]})
+
+
+def _normalize_obj_date(obj):
+    if hasattr(obj, "data_de_an"):
+        normalized = _normalize_date(getattr(obj, "data_de_an"))
+        setattr(obj, "data_de_an", normalized)
+    return obj
+
+
+def _clean_str(val):
+    if val is None:
+        return None
+    val = str(val).strip()
+    return val or None
+
+
 app = FastAPI()
 
 init_db()
+_clean_dates_in_db()
 
 COOKIE_EXPIRE_SECONDS = 100 * 60
 
@@ -43,42 +120,46 @@ OPTIONS_FILE = os.path.join('static', 'options.json')
 
 def load_options():
     try:
-        # Garantir que o diretório existe
         os.makedirs(os.path.dirname(OPTIONS_FILE), exist_ok=True)
-        
-        # Se o arquivo não existir, criar com valores padrão
+
+        defaults = {
+            'marcas': ['Positivo', 'Lenovo', 'Daten', 'Dell', 'Acer'],
+            'tipos_dispositivo': ['Desktop', 'Notebook'],
+            'tipos_armazenamento': ['NAN', 'HDD', 'SSD'],
+            'quantidades_ram': ['0', '1', '2', '4', '6', '8', '12', '16'],
+            'quantidades_armazenamento': ['0', '120', '128', '160', '240', '256', '320', '500', '1000'],
+            # Campos para outros dispositivos
+            'tipos_outros': ['monitor', 'impressora', 'scanner', 'switch', 'telefone', 'estabilizador', 'caixa de som'],
+            'marcas_outros': ['samsung', 'lg', 'positivo', 'lenovo', 'fujitsu', 'enermax', 'datacom', '3com', 'huawei', 'aoc', 'gwi', 'daruma', 'kodak'],
+            'modelo_outros': ['desconhecido'],
+            'modelos_pc': ['desconhecido'],
+            'funcionando': ['true', 'false'],
+            'estagiarios': ['N/A']
+        }
+
         if not os.path.exists(OPTIONS_FILE):
-            default_options = {
-                'marcas': ['Positivo', 'Lenovo', 'Daten', 'Dell', 'Acer'],
-                'tipos_dispositivo': ['Desktop', 'Notebook'],
-                'tipos_armazenamento': ['NAN', 'HDD', 'SSD'],
-                'quantidades_ram': ['0', '1', '2', '4', '6', '8', '12', '16'],
-                'quantidades_armazenamento': ['0', '120', '128', '160', '240', '256', '320', '500', '1000']
-            }
             with open(OPTIONS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(default_options, f, indent=4, ensure_ascii=False)
-            return default_options
-        
-        # Se o arquivo existir, carregar as opções
+                json.dump(defaults, f, indent=4, ensure_ascii=False)
+            return defaults
+
         with open(OPTIONS_FILE, 'r', encoding='utf-8') as f:
             options = json.load(f)
-            
-        # Garantir que todas as chaves necessárias existam
-        required_keys = ['marcas', 'tipos_dispositivo', 'tipos_armazenamento', 'quantidades_ram', 'quantidades_armazenamento']
-        for key in required_keys:
-            if key not in options:
-                options[key] = []
-                
+
+        # Garante todas as chaves necessárias
+        for key, value in defaults.items():
+            if key not in options or not isinstance(options[key], list):
+                options[key] = value
+
+        # Persistir caso tenha preenchido faltantes
+        with open(OPTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(options, f, indent=4, ensure_ascii=False)
+
         return options
     except Exception as e:
         logger.error(f"Erro ao carregar opções: {str(e)}")
         # Retornar opções vazias em caso de erro
         return {
-            'marcas': [],
-            'tipos_dispositivo': [],
-            'tipos_armazenamento': [],
-            'quantidades_ram': [],
-            'quantidades_armazenamento': []
+            **{k: [] for k in ['marcas','tipos_dispositivo','tipos_armazenamento','quantidades_ram','quantidades_armazenamento','tipos_outros','marcas_outros','modelo_outros','funcionando','estagiarios']}
         }
 
 def save_options(options):
@@ -200,6 +281,7 @@ def logout(response: Response):
 def get_dashboard(request: Request, db: Session = Depends(get_db)):
     try:
         dispositivos = db.query(DispositivoModel).all() + db.query(OutroDispositivo).all()
+        dispositivos = [_normalize_obj_date(d) for d in dispositivos]
         total = len(dispositivos)
         funcionando_count = sum(1 for d in dispositivos if d.funcionando)
         
@@ -221,17 +303,37 @@ def get_dashboard(request: Request, db: Session = Depends(get_db)):
         contagem_por_qnt_armaz = count_by('qnt_armaz')
 
 
-        # SOLUÇÃO AQUI: Carrega as opções do options.json para os filtros.
-        options = load_options()
-        all_models = (list(set(options.get('modelos_pc', []) + options.get('modelo_outros', []))))
+        def keys_from_count(counts):
+            return {_clean_str(k) for k in counts.keys() if _clean_str(k) and _clean_str(k) != 'N/A'}
+
+        # Opções dinâmicas a partir do banco (ignorando strings vazias) e complementando com contadores
+        tipos = {_clean_str(getattr(d, "tipo_de_disp", None)) for d in dispositivos if _clean_str(getattr(d, "tipo_de_disp", None))}
+        marcas = {_clean_str(getattr(d, "marca", None)) for d in dispositivos if _clean_str(getattr(d, "marca", None))}
+        modelos = {_clean_str(getattr(d, "modelo", None)) for d in dispositivos if _clean_str(getattr(d, "modelo", None))}
+        tipos_armaz = {_clean_str(getattr(d, "tipo_armaz", None)) for d in dispositivos if hasattr(d, "tipo_armaz") and _clean_str(getattr(d, "tipo_armaz", None))}
+        qnts_ram = {_clean_str(getattr(d, "qnt_ram", None)) for d in dispositivos if hasattr(d, "qnt_ram") and _clean_str(getattr(d, "qnt_ram", None))}
+        qnts_armaz = {_clean_str(getattr(d, "qnt_armaz", None)) for d in dispositivos if hasattr(d, "qnt_armaz") and _clean_str(getattr(d, "qnt_armaz", None))}
+        estagiarios_db = {_clean_str(getattr(d, "estagiario", None)) for d in dispositivos if _clean_str(getattr(d, "estagiario", None))}
+
+        tipos |= keys_from_count(contagem_por_tipo)
+        marcas |= keys_from_count(contagem_por_marca)
+        modelos |= keys_from_count(contagem_por_modelo)
+        tipos_armaz |= keys_from_count(contagem_por_tipo_armaz)
+        qnts_ram |= keys_from_count(contagem_por_qnt_ram)
+        qnts_armaz |= keys_from_count(contagem_por_qnt_armaz)
+        estagiarios_db |= keys_from_count(contagem_por_estagiario)
+
+        # Defaults mínimos
+        hardcoded_estagiarios = {"silas kenji", "joao pedro", "vitor hugo"}
+
         filtros = {
-            "tipos": (list(set(options.get('tipos_dispositivo', []) + options.get('tipos_outros', [])))),
-            "marcas": (list(set(options.get('marcas', []) + options.get('marcas_outros', [])))),
-            "modelos": all_models,
-            "tipos_armazenamento": (options.get('tipos_armazenamento', [])),
-            "quantidades_ram": (options.get('quantidades_ram', [])),
-            "quantidades_armazenamento": (options.get('quantidades_armazenamento', [])),
-            "estagiarios": (options.get('estagiarios', []))
+            "tipos": sorted(tipos),
+            "marcas": sorted(marcas),
+            "modelos": sorted(modelos),
+            "tipos_armazenamento": sorted(tipos_armaz),
+            "quantidades_ram": sorted(qnts_ram),
+            "quantidades_armazenamento": sorted(qnts_armaz),
+            "estagiarios": sorted(estagiarios_db | hardcoded_estagiarios),
         }
         
         context = {
@@ -445,6 +547,7 @@ def search_dispositivos(
             else:
                 outros_dispositivos = db.query(OutroDispositivo).all()
         dispositivos = dispositivos_pc + outros_dispositivos
+        dispositivos = [_normalize_obj_date(d) for d in dispositivos]
         if not dispositivos:
             logger.warning(f"No dispositivos found for advanced filters")
             return {"message": "No dispositivos found", "results": []}
@@ -532,6 +635,9 @@ def list_dispositivos(
         # Buscar dispositivos de ambas as tabelas
         dispositivos_pc = db.query(DispositivoModel).order_by(DispositivoModel.data_de_an.desc().nullslast()).all()
         outros_dispositivos = db.query(OutroDispositivo).order_by(OutroDispositivo.data_de_an.desc().nullslast()).all()
+
+        dispositivos_pc = [_normalize_obj_date(d) for d in dispositivos_pc]
+        outros_dispositivos = [_normalize_obj_date(d) for d in outros_dispositivos]
 
         # Combinar os resultados
         todos_dispositivos = dispositivos_pc + outros_dispositivos

@@ -8,7 +8,11 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 # Configuração do banco de dados usando caminho relativo
-db_path = BASE_DIR / 'dispositivos.db'
+# Se estiver em Docker, usa /app/data, caso contrário usa o diretório atual
+if os.path.exists('/app/data'):
+    db_path = Path('/app/data') / 'dispositivos.db'
+else:
+    db_path = BASE_DIR / 'dispositivos.db'
 DATABASE_URL = f"sqlite:///{db_path}"
 
 # Configuração do engine com tratamento de erros

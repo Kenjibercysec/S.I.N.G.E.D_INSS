@@ -17,7 +17,6 @@ down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-"""
 def upgrade() -> None:
     ### Upgrade schema.
 
@@ -29,7 +28,7 @@ def upgrade() -> None:
     sa.Column('qnt_armaz', sa.Integer(), nullable=True),
     sa.Column('tipo_armaz', sa.String(length=10), nullable=True),
     sa.Column('marca', sa.String(length=50), nullable=False),
-    sa.Column('modelo', sa.String(length=50), nullable=False),
+    sa.Column('modelo', sa.String(length=50), nullable=True),
     sa.Column('funcionando', sa.Boolean(), nullable=True),
     sa.Column('data_de_an', sa.Date(), nullable=True),
     sa.Column('locat_do_disp', sa.String(length=100), nullable=True),
@@ -38,6 +37,22 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id_tomb')
     )
     op.create_index(op.f('ix_dispositivos_id_tomb'), 'dispositivos', ['id_tomb'], unique=False)
+    op.create_table('outros_dispositivos',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id_tomb', sa.Integer(), nullable=True),
+    sa.Column('tipo_de_disp', sa.String(), nullable=True),
+    sa.Column('marca', sa.String(), nullable=True),
+    sa.Column('modelo', sa.String(), nullable=True),
+    sa.Column('funcionando', sa.Boolean(), nullable=True),
+    sa.Column('data_de_an', sa.Date(), nullable=True),
+    sa.Column('locat_do_disp', sa.String(), nullable=True),
+    sa.Column('descricao', sa.String(), nullable=True),
+    sa.Column('estagiario', sa.String(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('id_tomb')
+    )
+    op.create_index(op.f('ix_outros_dispositivos_id'), 'outros_dispositivos', ['id'], unique=False)
+    op.create_index(op.f('ix_outros_dispositivos_id_tomb'), 'outros_dispositivos', ['id_tomb'], unique=False)
     op.create_table('usuarios',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nome', sa.String(), nullable=True),
@@ -70,7 +85,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_usuarios_id'), table_name='usuarios')
     op.drop_index(op.f('ix_usuarios_email'), table_name='usuarios')
     op.drop_table('usuarios')
+    op.drop_index(op.f('ix_outros_dispositivos_id_tomb'), table_name='outros_dispositivos')
+    op.drop_index(op.f('ix_outros_dispositivos_id'), table_name='outros_dispositivos')
+    op.drop_table('outros_dispositivos')
     op.drop_index(op.f('ix_dispositivos_id_tomb'), table_name='dispositivos')
     op.drop_table('dispositivos')
     # ### end Alembic commands ###
-"""

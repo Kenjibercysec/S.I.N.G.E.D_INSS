@@ -1,0 +1,70 @@
+# Docker Compose para Produção
+# Use este arquivo para deployment em produção
+#
+# Uso: docker-compose -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  singed-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: singed-inss-prod
+    ports:
+      - "80:8080"  # Mapeia para porta 80 (HTTP padrão)
+    volumes:
+      - singed-data:/app/data
+      - singed-static:/app/static
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PRODUCTION=true
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 512M
+    networks:
+      - singed-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx como proxy reverso (opcional)
+  # Descomente para usar HTTPS e melhor performance
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: singed-nginx
+  #   ports:
+  #     - "443:443"
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - singed-app
+  #   restart: always
+  #   networks:
+  #     - singed-network
+
+volumes:
+  singed-data:
+    driver: local
+  singed-static:
+    driver: local
+
+networks:
+  singed-network:
+    driver: bridge
